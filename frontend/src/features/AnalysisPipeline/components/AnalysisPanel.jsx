@@ -286,7 +286,7 @@ const AnalysisPanel = ({ uploadedFiles, onAnalysisComplete, onReset }) => {
 
   return (
     <div className="analysis-section">
-      <h2>DNA Analysis Pipeline</h2>
+      <h2>eDNA Analysis Pipeline</h2>
       
       {detectedSpecies.length > 0 && (
         <div className="species-selection-container">
@@ -351,7 +351,7 @@ const AnalysisPanel = ({ uploadedFiles, onAnalysisComplete, onReset }) => {
           </div>
 
           <div className='steps'>
-            <h3>2. Merge paired-end reads & Length Filtering</h3>
+            <h3>2. Merge Paired-end Reads & Length Filtering</h3>
             <div className='detail'>
               <p><Dot />Tool: PEAR v0.9.6 for assembly</p>
               <p><Dot />Merge overlapping paired-end reads (R1/R2) into single reads</p>
@@ -404,11 +404,11 @@ const AnalysisPanel = ({ uploadedFiles, onAnalysisComplete, onReset }) => {
                   onChange={handleNCBIFileChange}
                 />
               </div>
-              <p><Dot />Applies species assignment rules using sequence identity</p>
+              <p><Dot />Apply species assignment rules using sequence identity</p>
               <div className="input-container">
                 <h3>Please define minimum identity</h3>
                 <div className='identity-container'>
-                  <label htmlFor="keyword">Priority exactly matched word (optional):</label>
+                  <label htmlFor="keyword">Priority exactly matched word (ex. mitochondrion):</label>
                   <input 
                     type="text" 
                     id="keyword" 
@@ -416,7 +416,7 @@ const AnalysisPanel = ({ uploadedFiles, onAnalysisComplete, onReset }) => {
                     value={keyword || ''}
                     onChange={(e) => handleKeywordChange(e.target.value)}
                   />
-                  <label>(ex. mitochondrion)</label>
+                  <label>(optional)</label>
                 </div>
                 <div className='identity-container'>
                   <label htmlFor="identity">Minimum identity threshold:</label>
@@ -432,7 +432,7 @@ const AnalysisPanel = ({ uploadedFiles, onAnalysisComplete, onReset }) => {
                   <span>% identity</span>
                 </div>
               </div>
-              <p><Dot />Separates sequences by assigned species into individual FASTA files</p>
+              <p><Dot />Separates sequences into individual FASTA files by assigned species</p>
             </div>
           </div>
 
@@ -446,13 +446,13 @@ const AnalysisPanel = ({ uploadedFiles, onAnalysisComplete, onReset }) => {
           </div>
 
           <div className='steps'>
-            <h3>5. Amplicon sequence variations (ASVs) Identification</h3>
+            <h3>5. Amplicon Sequence Variations (ASVs) Identification</h3>
             <div className='detail'>
               <p><Dot />Identify identical sequences and counts their occurrence frequency</p>
               <p><Dot />Generate separate files for common haplotypes and rare variants</p>
               <div className='input-container'>
                 <div className='copies-container'>
-                  <h3>Please define minimum number of copies:</h3>
+                  <h3>Please define minimum number of identical copies:</h3>
                   <input 
                     type='number' 
                     id="copy-number" 
@@ -463,7 +463,7 @@ const AnalysisPanel = ({ uploadedFiles, onAnalysisComplete, onReset }) => {
                     onChange={(e) => handleCopyNumberChange(e.target.value)}
                   />
                 </div>
-                (Sequences with copies ≤ this number will be classified as unique)
+                (Sequences with identical copies ≤ this number will be classified as rare variants)
               </div>
             </div>
           </div>

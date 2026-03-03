@@ -245,7 +245,7 @@ const ResultsPanel = ({ onReset }) => {
     <div className="results-section">
       <div className="results-header">
         <h2>Analysis Results</h2>
-        <p>DNA analysis has completed. Results are organized by species below.</p>
+        <p>eDNA analysis has completed. Results are organized by species below.</p>
       </div>
 
       {hasResults ? (
