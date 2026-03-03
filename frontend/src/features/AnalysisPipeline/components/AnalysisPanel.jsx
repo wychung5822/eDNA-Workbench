@@ -432,7 +432,7 @@ const AnalysisPanel = ({ uploadedFiles, onAnalysisComplete, onReset }) => {
                   <span>% identity</span>
                 </div>
               </div>
-              <p><Dot />Separates sequences into individual FASTA files by assigned species</p>
+              <p><Dot />Separate sequences into individual FASTA files by assigned species</p>
             </div>
           </div>
 
