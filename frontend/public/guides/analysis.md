@@ -16,12 +16,14 @@ For each identified species, the pipeline generates three files:
 
 *   **Multiple Sequence Alignment (MSA):** A FASTA file containing aligned sequences.
     *   *Defline Format:* `>ProjectID_ReadIndex_LocationID,ASV_Index_Count`
-    *   *Example:* `>ZpDL_139_YTR,ASV_0_5`
-    *   *Key:*
-    *   *   **ZpDL:** Project ID.
-        *   **139:** Read index number from the raw FASTQ file.
-        *   **YTR:** Location ID.
-        *   **ASV_0_5:** ASV information (ASV index 0, total of 5 identical reads).
+    *   *Example:* `>ZpDL_139_YTR,ASV_0_5` (separated by comma and then by underscore)
+    *   *Key:* 
+    *   *   **ZpDL:** Project ID
+        *   **139:** Read index number from the raw FASTQ file
+        *   **YTR:** Location ID
+        *   **ASV:** Indicate ASV information
+        *   **0:** ASV index 0
+        *   **5:** There are 5 identical reads of this ASV
 *   **Rare or Low-Occurrence Reads:** A file containing reads excluded from the final analysis due to low frequency.
 *   **Location vs. ASV Table:** A comma-separated (CSV) file detailing ASV counts per location for that specific species.
 
@@ -40,3 +42,9 @@ Compressed files are provided for convenient download.
 *   **Merged-read lengths:** Enter minimum and maximum lengths.
 *   **Identity %:** Default is 98% for species assignment.
 *   **Min Copies:** Default is 3 to determine an ASV.
+
+PEAR: https://doi.org/10.1093/bioinformatics/btt593
+
+BLAST: https://blast.ncbi.nlm.nih.gov/Blast.cgi
+
+MAFFT: https://doi.org/10.1093/nar/gkt389
