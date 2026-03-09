@@ -28,8 +28,8 @@ export default function HomePage() {
           <div className="entry-description">
             <ul>
               <li>Explore interactive phylogenetic trees with node details and export options.</li>
-              <li>Visualize haplotype networks alongside geographic maps and linked tables.</li>
               <li>Inspect sequence alignments and interactively filter or export visual data.</li>
+              <li>Visualize haplotype networks alongside geographic maps and linked tables.</li>
             </ul>
           </div>
         </Link>
@@ -54,7 +54,7 @@ export default function HomePage() {
       </section>
 
       <footer className="home-footer">
-        <p>© 2026 eDNA Workbench. All rights reserved.</p>
+        <p>© 2026 BICL.CSIE@NKUST, Taiwan. All rights reserved.</p>
       </footer>
     </div>
   );
