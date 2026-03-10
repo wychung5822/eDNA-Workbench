@@ -22,52 +22,32 @@
 }
 
 [data-theme="dark"] {
-    /* --bg-page: #222222;
-    --text: oklch(0.985 0 0);
-    --bg-surface: oklch(0.269 0 0);
+    /* --bg-page: #121212; */
+    --bg-page: #14181e;
 
-    --primary: oklch(0.922 0 0);
-    --bg-surface-raised: oklch(35.618% 0.00004 271.152);
-    --danger: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439); */
+    /* --bg-surface: #1e1e1e; */
+    --bg-surface: #222832;
 
-    /* 背景層次：由深到淺體現高度感 */
-    --bg-page: #121212;
-    /* 最底層背景 */
-    --bg-surface: #1e1e1e;
-    /* 卡片、容器背景 */
-    --bg-surface-raised: #2c2c2c;
-    /* 懸浮、提示框背景 */
+    /* --bg-surface-raised: #2c2c2c; */
+    --bg-surface-raised: #29313d;
 
-    /* 品牌色：調整亮度以符合 AAA 對比度 */
-    --primary: #5da9f6;
-    /* 較亮的藍色，確保在黑底上的可讀性 */
+    --primary: #f37726;
     --border: #333333;
-    /* 細微的邊框 */
 
-    /* 文字顏色 */
-    --text: #e0e0e0;
-    /* 主文字：柔和白 */
-    --detail: #a0a0a0;
-    /* 次要文字：中灰 */
+    --text: #ced6dd;
+    --detail: #9ca4af;
     --input: #252525;
-    /* 輸入框背景 */
 
     --bg-code-header: #4a4842;
     --bg-code: #300a24;
     --text-code: #fafafa;
 
     /* 狀態顏色：降低飽和度避免霓虹感 */
-    --success: #43a047;
-    --warning: #ffb300;
-    --danger: #e53935;
+    --success: #3fb950;
+    --warning: #d29922;
+    --danger: #f85149;
+
+    --status-label-text: #212121;
 }
 
 * {

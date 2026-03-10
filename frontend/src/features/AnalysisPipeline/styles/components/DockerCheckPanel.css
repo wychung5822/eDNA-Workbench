@@ -79,16 +79,34 @@
   border-color: color-mix(in srgb, var(--success) 50%, var(--bg-surface) 50%);
 }
 
+[data-theme="dark"] .status-item.success {
+  background-color: var(--success);
+  /* color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 50%, var(--bg-surface) 50%); */
+}
+
 .status-item.error {
   background: color-mix(in srgb, var(--danger) 20%, var(--bg-surface) 80%);
   color: var(--danger);
   border-color: color-mix(in srgb, var(--danger) 50%, var(--bg-surface) 50%);
 }
 
+[data-theme="dark"] .status-item.error {
+  background-color: var(--danger);
+  /* color: var(--danger); */
+  /* border-color: color-mix(in srgb, var(--danger) 50%, var(--bg-surface) 50%); */
+}
+
 .status-item.warning {
   background: color-mix(in srgb, var(--warning) 20%, var(--bg-surface) 80%);
   color: var(--warning);
   border-color: color-mix(in srgb, var(--warning) 50%, var(--bg-surface) 50%);
+}
+
+[data-theme="dark"] .status-item.warning {
+  background-color: var(--warning);
+  /* color: var(--warning); */
+  /* border-color: color-mix(in srgb, var(--warning) 50%, var(--bg-surface) 50%); */
 }
 
 .status-icon {
@@ -99,11 +117,11 @@
 .status-label {
   flex: 1;
   font-weight: 500;
-  color: var(--text);
+  color: var(--status-label-text);
 }
 
 .status-value {
-  color: var(--detail);
+  color: color-mix(in srgb, var(--status-label-text) 80%, var(--bg-surface) 20%);
   font-size: 0.9rem;
 }
 
