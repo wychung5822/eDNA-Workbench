@@ -32,6 +32,7 @@ const AppContent = () => {
 
   const location = useLocation();
   const isHomePage = location.pathname === "/";
+  const isPhylotreeV2 = location.pathname === "/phylotree-v2";
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme')
@@ -52,12 +53,12 @@ const AppContent = () => {
   return (
     <AnalysisProvider>
       <FileProvider>
-        <div className="main-content">
+        <div className={`main-content ${isPhylotreeV2 ? 'fixed-layout' : ''}`}>
           { isMac && <TitleBar /> }
 
           { !isHomePage && <Navbar theme={theme} toggleTheme={toggleTheme} /> }
 
-          <main className="app-main">
+          <main className={`app-main ${isPhylotreeV2 ? 'fixed-layout' : ''}`}>
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/analysis" element={<AnalysisPipelinePage />} />
