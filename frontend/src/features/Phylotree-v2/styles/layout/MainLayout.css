@@ -1,0 +1,58 @@
+.phylotree-viewer {
+    display: grid;
+    grid-template-columns: 280px 1fr 320px;
+    height: 100%;
+    overflow: hidden;
+}
+
+.sidebar-left {
+    border-right: 1px solid var(--border);
+    background: var(--bg-surface);
+    overflow-y: auto;
+    height: 100%;
+}
+
+.tree-viewer {
+    overflow: auto;
+    background: var(--bg-surface);
+    position: relative;
+}
+
+.sidebar-right {
+    border-left: 1px solid var(--border);
+    background: var(--bg-surface);
+    overflow-y: auto;
+    /* height: 100%; */
+}
+
+
+/* Scrollbar */
+.phylotree-viewer ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+.phylotree-viewer ::-webkit-scrollbar-track:vertical {
+    background: transparent;
+    border-left: 1px solid var(--border);
+}
+
+.phylotree-viewer ::-webkit-scrollbar-track:horizontal {
+    background: transparent;
+    border-top: 1px solid var(--border);
+}
+
+.phylotree-viewer ::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 10px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+}
+
+.phylotree-viewer ::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--border) 80%, var(--text) 20%)
+}
+
+.phylotree-viewer ::-webkit-scrollbar-corner {
+    background: transparent;
+}
