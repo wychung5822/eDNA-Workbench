@@ -31,7 +31,10 @@
     /* --bg-surface-raised: #2c2c2c; */
     --bg-surface-raised: #29313d;
 
-    --primary: #f37726;
+    /* --primary: #f37726; */
+    --primary: #f1faff;
+    /* --primary: #d3fbd8; */
+    /* --primary: #00c6b8; */
     --border: #333333;
 
     --text: #ced6dd;

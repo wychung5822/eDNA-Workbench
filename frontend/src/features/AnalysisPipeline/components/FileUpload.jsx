@@ -37,7 +37,13 @@ const FileUpload = ({ onFilesUploaded }) => {
     onDrop,
     accept: {
       'text/plain': ['.fq', '.fastq'],
-      'text/csv': ['.csv']
+      'text/csv': ['.csv'],
+      'application/zip': ['.zip'],
+      'application/x-zip-compressed': ['.zip'],
+      'application/x-7z-compressed': ['.7z'],
+      'application/x-rar-compressed': ['.rar'],
+      'application/x-tar': ['.tar'],
+      'application/gzip': ['.gz', '.tar.gz']
     },
     multiple: true
   })
@@ -130,13 +136,13 @@ const FileUpload = ({ onFilesUploaded }) => {
           <div className="drop-active">
             <Upload size={48} />
             <p>Drop files here...</p>
-            <small>Supported: .fq, .fastq, .csv</small>
+            <small>Supported: .fq, .fastq, .csv, .zip, .7z, .rar, .tar, .gz</small>
           </div>
         ) : (
           <div className="drop-idle">
             <Upload size={48} />
             <p>Drag & drop files here, or click to select</p>
-            <small>Supported: .fq, .fastq, .csv</small>
+            <small>Supported: .fq, .fastq, .csv, .zip, .7z, .rar, .tar, .gz</small>
           </div>
         )}
       </div>
