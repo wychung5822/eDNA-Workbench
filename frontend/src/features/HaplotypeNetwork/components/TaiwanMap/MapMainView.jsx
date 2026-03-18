@@ -48,11 +48,10 @@ const MapMainView = ({
         <div className="MapMainView-warning-box">
           <p>⚠️ Complete the following settings：</p>
           <ul>
-            {!mapImage && <li> Select or Upload a Map Image </li>}
-            {!imgW && <li> Enter image Width</li>}
-            {!imgH && <li> Enter image Height</li>}
+            {!mapImage && <li> Select or upload a map image </li>}
+            {!imgW && <li> Enter the image width and heigth</li>}
             {(!filteredCityGeneData || Object.keys(filteredCityGeneData).length === 0) && (
-              <li> Enter Summary_table or FA_table</li>
+              <li> Check the table at the right-hand side</li>
             )}
           </ul>
         </div>
@@ -72,7 +71,7 @@ const MapMainView = ({
             <button 
               onClick={() => handleExportPNG(localFileName)}
               className="MapMainView-button-File"
-            >Export Map PNG + Haplotype List
+            >Export Map PNG 
             </button>
           </div>
 
