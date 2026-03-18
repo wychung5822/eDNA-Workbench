@@ -275,13 +275,16 @@ const CVSTable = ({
                         : cell;
 
                       let bgColor = undefined;
+                      let textColor = undefined;
                       if (isHapCol) {
                         if (!showPercentage && rawValue > 0) {
                           bgColor = "var(--primary)";
+                          textColor = "var(--bg-surface)";
                         } else if (showPercentage && total > 0) {
                           const percent = (rawValue / total) * 100;
                           if (percent >= minPercentage && percent <= maxPercentage) {
                             bgColor = "var(--primary)";
+                            textColor = "var(--bg-surface)";
                           }
                         }
                       }
@@ -291,6 +294,7 @@ const CVSTable = ({
                           key={colIndex}
                           style={{
                             backgroundColor: bgColor,
+                            color: textColor,
                             textAlign: "center",
                           }}
                         >
