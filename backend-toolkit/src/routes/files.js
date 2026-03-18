@@ -13,6 +13,7 @@ import {
 import { logger } from "../utils/logger.js";
 import { exec } from "child_process";
 import util from "util";
+import sevenBin from "7zip-bin";
 
 const execAsync = util.promisify(exec);
 
@@ -39,10 +40,17 @@ const handleExtractArchive = async (fileArray) => {
       let extractedFilePath = null;
 
       if (originalName.endsWith('.7z') || originalName.endsWith('.rar')) {
-        // Use 7z command line for 7z and rar if installed on the system (macOS/Linux)
-        // Alternatively we can try 7z binaries. Assuming the system has 7z installed 
-        // as MEVPLab environment usually has standard bioinformatics tools.
-        await execAsync(`7z x "${fileObj.path}" -o"${extractDir}" -y`);
+        // Use 7zip-bin which includes correct binaries for each OS
+        const pathTo7zip = sevenBin.path7za;
+        
+        // Ensure the binary has execution permissions (especially necessary on MacOS/Linux)
+        try {
+          fs.chmodSync(pathTo7zip, 0o755);
+        } catch (chmodErr) {
+          logger.warn(`Could not set permissions on 7za binary: ${chmodErr.message}`);
+        }
+
+        await execAsync(`"${pathTo7zip}" x "${fileObj.path}" -o"${extractDir}" -y`);
         
         // Find the extracted file (assuming 1 file inside)
         const files = fs.readdirSync(extractDir);
