@@ -79,7 +79,16 @@ export function FileProvider({ children }) {
       const worksheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
-      setEDnaSampleContent(jsonData);
+      const cleanedJsonData = jsonData.map((row) => {
+        const cleanedRow = {};
+        Object.keys(row).forEach((key) => {
+          const cleanedKey = key.replace(/\s+/g, "");
+          cleanedRow[cleanedKey] = row[key];
+        });
+        return cleanedRow;
+      });
+
+      setEDnaSampleContent(cleanedJsonData);
     };
     reader.readAsArrayBuffer(file);
   };
