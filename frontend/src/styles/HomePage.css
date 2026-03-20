@@ -18,14 +18,14 @@
   justify-content: center;
   align-items: center;
   color: var(--text);
-  gap: 10px;
+  gap: 1rem;
   margin-top: 10vh;
   user-select: none;
 }
 
 .title .eDNA-logo {
-  height: 100px;
-  width: 100px;
+  height: 5rem;
+  width: calc(5rem * 2.583); /* 依圖片真實比例 2043/791 */
 
   background-color: var(--text);
 
@@ -33,11 +33,6 @@
   mask-size: contain;
   mask-repeat: no-repeat;
   mask-position: center;
-
-  /* -webkit-mask-image: url('../assets/eDNA_logo.png');
-  -webkit-mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center; */
 }
 
 .title h1 {

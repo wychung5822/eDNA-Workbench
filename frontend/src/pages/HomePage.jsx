@@ -6,7 +6,7 @@ export default function HomePage() {
     <div className="home-main">
       <div className="title">
         <div className='eDNA-logo'></div>
-        <h1>eDNA Workbench</h1>
+        <h1>Workbench</h1>
       </div>
 
       <div className="entry">
