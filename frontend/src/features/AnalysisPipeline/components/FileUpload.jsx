@@ -137,12 +137,16 @@ const FileUpload = ({ onFilesUploaded }) => {
             <Upload size={48} />
             <p>Drop files here...</p>
             <small>Supported: .fq, .fastq, .csv, .zip, .7z, .rar, .tar, .gz</small>
+            <br />
+            <small>Support for compressed FASTQ files</small>
           </div>
         ) : (
           <div className="drop-idle">
             <Upload size={48} />
             <p>Drag & drop files here, or click to select</p>
             <small>Supported: .fq, .fastq, .csv, .zip, .7z, .rar, .tar, .gz</small>
+            <br />
+            <small>Support for compressed FASTQ files</small>
           </div>
         )}
       </div>
