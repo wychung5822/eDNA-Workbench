@@ -19,7 +19,7 @@ function InternalNode({
   onNodeClick,
   onMouseEnter,
   onMouseLeave,
-}) {
+}) { 
   return (
     <g
       className="internal-node"

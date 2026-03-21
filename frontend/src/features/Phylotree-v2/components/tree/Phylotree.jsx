@@ -2,15 +2,18 @@ import { scaleLinear } from 'd3-scale';
 import { useMemo } from 'react';
 import { useTree } from '../../context/TreeContext';
 import { useUI } from '../../context/UIContext';
+import { useTooltip } from '../../hooks/useTooltip';
 import { useTreeLayout } from '../../hooks/useTreeLayout';
+import BranchTooltip from '../ui/BranchTooltip';
 import Branch from './Branch';
-import Node from './Node'; // 你需要把 InternalNode 和 NodeLabel 整合進這裡
+import Node from './Node';
 
 import { collectInternalNodes, getHiddenBranches, shouldHideInternalNode } from '../../utils/TreeUtils';
 
-const Phylotree = () => {
-  const { state: { treeInstance, collapsedNodes, renamedNodes, merged }, toggleCollapse, openContextMenu, renameNode } = useTree();
+const Phylotree = ({ onNodeRename }) => {
+  const { state: { treeInstance, collapsedNodes, renamedNodes, merged }, openContextMenu } = useTree();
   const { settings, searchTerm } = useUI();
+  const { tooltip, showTooltip, hideTooltip } = useTooltip();
 
   // 1. 計算佈局 (這會給每個節點加上 x, y 座標)
   const processedTree = useTreeLayout(treeInstance, settings, collapsedNodes, merged);
@@ -49,9 +52,9 @@ const Phylotree = () => {
   return (
     <g transform="translate(20, 0)">
       {/* 繪製分支 */}
-      {links.map((link, i) => (
+      {links.map((link) => (
         <Branch 
-          key={`branch-${i}`}
+          key={`branch-${link.source.unique_id}-${link.target.unique_id}`}
           link={link}
           xScale={xScale}
           yScale={yScale}
@@ -59,6 +62,12 @@ const Phylotree = () => {
           searchTerm={searchTerm}
           onClick={() => console.log('Branch clicked', link)}
           onContextMenu={(e) => openContextMenu(e, link.target.unique_id, link.target, false)}
+          onMouseMove={(e, targetNode) => {
+            const svg = e.currentTarget.ownerSVGElement;
+            const rect = svg.getBoundingClientRect();
+            showTooltip(e.clientX - rect.left, e.clientY - rect.top, targetNode);
+          }}
+          onMouseLeave={hideTooltip}
         />
       ))}
 
@@ -72,10 +81,18 @@ const Phylotree = () => {
           y={yScale(nodeInfo.y)}
           isCollapsed={collapsedNodes.has(id)}
           renamedLabel={renamedNodes.get(id)}
-          onRename={(newName) => renameNode(id, newName)}
+          showInternalLabels={settings.showInternalLabels}
+          onRename={(newName) => onNodeRename(id, newName)}
           onContextMenu={(e) => openContextMenu(e, id, nodeInfo, collapsedNodes.has(id))}
         />
       ))}
+
+      {/* Tooltip — 永遠渲染在最上層 */}
+      <BranchTooltip
+        tooltip={tooltip}
+        svgWidth={settings.width}
+        svgHeight={settings.height}
+      />
     </g>
   );
 };

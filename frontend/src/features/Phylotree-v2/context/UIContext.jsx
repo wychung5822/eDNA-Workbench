@@ -1,20 +1,20 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useState } from 'react';
 
 const UIContext = createContext();
 
-export const UIProvider = ({ children }) => {
-  // Visual settings
-  const [settings, setSettings] = useState({
-    width: 800,
-    height: 600,
-    showInternalLabels: false,
-    alignTips: 'left', // 'left', 'right'
-    sort: null, // 'ascending', 'descending', null
-    horizontalSpacing: 20,
-    verticalSpacing: 20
-  });
+const defaultSettings = {
+  width: 800,
+  height: 600,
+  showInternalLabels: false,
+  alignTips: 'left',
+  sort: null,
+  horizontalSpacing: 20,
+  verticalSpacing: 20
+};
 
-  // Search
+export const UIProvider = ({ children }) => {
+  const [settings, setSettings] = useState(defaultSettings);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
 
@@ -22,10 +22,17 @@ export const UIProvider = ({ children }) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
+  const resetSettings = useCallback(() => {
+    setSettings(defaultSettings);
+    setSearchTerm("");
+    setSearchResults([]);
+  }, []);
+
   return (
     <UIContext.Provider value={{ 
       settings, 
-      updateSetting, 
+      updateSetting,
+      resetSettings,
       searchTerm, 
       setSearchTerm,
       searchResults, 

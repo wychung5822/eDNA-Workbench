@@ -1,5 +1,5 @@
 
-const Branch = ({ link, xScale, yScale, settings, searchTerm, onClick, onContextMenu }) => {
+const Branch = ({ link, xScale, yScale, onClick, onContextMenu, onMouseMove, onMouseLeave }) => {
   const { source, target } = link;
 
   // Calculate coordinates
@@ -20,17 +20,20 @@ const Branch = ({ link, xScale, yScale, settings, searchTerm, onClick, onContext
   const stroke = '#ccc';
   const strokeWidth = 2; // Fixed for now, can be dynamic
   
-  // Highlighting logic can go here if needed
+  const isLeaf = !target.children || target.children.length === 0;
 
   return (
     <path
+      className="rp-branch"
       d={d}
       fill="none"
       stroke={stroke}
       strokeWidth={strokeWidth}
-      style={{ cursor: 'pointer' }}
-      onClick={onClick}
-      onContextMenu={onContextMenu}
+      style={{ cursor: isLeaf ? 'default' : 'pointer' }}
+      onClick={isLeaf ? undefined : onClick}
+      onContextMenu={isLeaf ? undefined : onContextMenu}
+      onMouseMove={onMouseMove ? (e) => onMouseMove(e, target) : undefined}
+      onMouseLeave={onMouseLeave}
     />
   );
 };

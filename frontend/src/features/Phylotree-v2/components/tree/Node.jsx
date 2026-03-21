@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 
-const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMenu }) => {
+const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMenu, showInternalLabels }) => {
   const isInternal = data.children && data.children.length > 0;
-  const showLabel = !isInternal || isCollapsed; // Show label if leaf or collapsed
+  // Show label if leaf, collapsed, or if internal labels are explicitly requested
+  const showLabel = (!isInternal && data.data.name) || isCollapsed || (isInternal && showInternalLabels && data.data.name);
   
   const [isEditing, setIsEditing] = useState(false);
   const [tempName, setTempName] = useState("");
@@ -11,19 +12,14 @@ const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMe
   const radius = isInternal ? 4 : 3;
   const fill = isCollapsed ? 'red' : (isInternal ? '#555' : '#999');
   
-  // Label text logic
-  // If expanded: use original data.name (trust degree)
-  // If collapsed: use renamedLabel. If renamedLabel is empty, show "Double click to name" as placeholder.
   let labelText = data.data.name;
   let displayPlaceholder = false;
 
-  if (isCollapsed) {
-    if (renamedLabel) {
-        labelText = renamedLabel;
-    } else {
-        labelText = "Double click to name"; 
-        displayPlaceholder = true;
-    }
+  if (renamedLabel) {
+    labelText = renamedLabel;
+  } else if (isCollapsed) {
+    labelText = "Double click to name"; 
+    displayPlaceholder = true;
   }
 
   useEffect(() => {
@@ -33,12 +29,10 @@ const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMe
   }, [isEditing]);
 
   const handleDoubleClick = (e) => {
-    if (isCollapsed) {
-        e.stopPropagation();
-        setIsEditing(true);
-        // If it's a placeholder, start with empty string. Otherwise use the existing name.
-        setTempName(displayPlaceholder ? "" : labelText);
-    }
+    e.stopPropagation();
+    setIsEditing(true);
+    // If it's a placeholder, start with empty string. Otherwise use the existing name.
+    setTempName(displayPlaceholder ? "" : labelText);
   };
 
   const handleKeyDown = (e) => {
@@ -50,23 +44,23 @@ const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMe
   };
 
   const finishEditing = () => {
-    if (tempName.trim() !== "") {
-        onRename(tempName);
-    }
+    onRename(tempName);
     setIsEditing(false);
   };
 
   return (
     <g transform={`translate(${x}, ${y})`}>
-      {/* Single Node Circle with transparent stroke for hit area */}
-      <circle
-        r={radius}
-        fill={fill}
-        stroke="transparent"
-        strokeWidth="10" 
-        onClick={onContextMenu}
-        style={{ cursor: isInternal ? 'pointer' : 'default' }}
-      />
+      {/* Single Node Circle with transparent stroke for hit area - ONLY for Internal or Collapsed */}
+      {(isInternal || isCollapsed) && (
+        <circle
+          r={radius}
+          fill={fill}
+          stroke="transparent"
+          strokeWidth="10" 
+          onClick={onContextMenu}
+          style={{ cursor: isInternal ? 'pointer' : 'default' }}
+        />
+      )}
 
       {/* Label or Input */}
       {showLabel && (
@@ -82,7 +76,7 @@ const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMe
                         width: "100%",
                         fontSize: "12px",
                         padding: "2px",
-                        border: "1px solid #ccc",
+                        border: "1px solid var(--border)",
                         borderRadius: "2px",
                         outline: "none"
                     }}
@@ -96,7 +90,7 @@ const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMe
               style={{ 
                   fontSize: '12px', 
                   fontFamily: 'Arial',
-                  fill: '#333',
+                  fill: 'var(--text)',
                   cursor: isCollapsed ? 'text' : 'default',
                   userSelect: 'none'
               }}
@@ -106,18 +100,21 @@ const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMe
         )
       )}
 
-      {/* Debug ID (Optional, requested by user earlier) */}
-      <text
-        x="8"
-        y="4"
-        fill="red"
-        style={{
-          fontSize: "10px",
-          fontWeight: "bold",
-        }}
-      >
-        {id}
-      </text>
+      {/* Debug ID (Only for internal/collapsed nodes as requested) */}
+      {/* {(isInternal || isCollapsed) && (
+        <text
+          x="8"
+          y="4"
+          fill="red"
+          style={{
+            marginLeft: "10px",
+            fontSize: "10px",
+            fontWeight: "bold",
+          }}
+        >
+          {id}
+        </text>
+      )} */}
     </g>
   );
 };
