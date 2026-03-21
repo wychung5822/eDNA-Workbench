@@ -2,8 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 
 const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMenu, showInternalLabels }) => {
   const isInternal = data.children && data.children.length > 0;
-  // Show label if leaf, collapsed, or if internal labels are explicitly requested
-  const showLabel = (!isInternal && data.data.name) || isCollapsed || (isInternal && showInternalLabels && data.data.name);
+  // Show label only for:
+  //   - collapsed nodes (renamed placeholder)
+  //   - internal nodes when showInternalLabels is on
+  // Leaf node text is handled exclusively by LeafLabel.jsx
+  const showLabel = isCollapsed || (isInternal && showInternalLabels && data.data.name);
   
   const [isEditing, setIsEditing] = useState(false);
   const [tempName, setTempName] = useState("");

@@ -103,6 +103,12 @@ circle.hovered {
     fill: var(--detail);
 }
 
+/* ── Leaf label highlight (search match) ──────────────────── */
+.rp-label-highlight {
+    fill: yellow;
+    stroke: none;
+}
+
 /* ── Tooltip ───────────────────────────────────────────────── */
 .rp-tooltip {
     pointer-events: none;
@@ -128,4 +134,9 @@ circle.hovered {
 .rp-tooltip .tooltip-value {
     font-weight: 600;
     fill: var(--text);
+}
+
+
+.align-dash .rp-branch-tracer {
+    transition: all 0.2s;
 }
