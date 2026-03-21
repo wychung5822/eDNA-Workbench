@@ -136,7 +136,20 @@ circle.hovered {
     fill: var(--text);
 }
 
-
+/* ── Tracer line transition ─────────────────────────────────── */
 .align-dash .rp-branch-tracer {
     transition: all 0.2s;
+}
+
+/* ── Inline label editing input (shared by Node + LeafLabel) ── */
+.rp-label-input {
+    width: 100%;
+    font-size: 14px;
+    font-family: Courier, monospace;
+    padding: 2px 4px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    outline: none;
+    background: var(--bg-surface-raised);
+    color: var(--text);
 }

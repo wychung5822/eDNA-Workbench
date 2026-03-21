@@ -1,77 +1,117 @@
+import { useEffect, useRef, useState } from 'react';
 import { estimateTextWidth } from '../../utils/textWidth';
 
 const LABEL_FONT_SIZE = 14;
+const LEFT_TIP_GAP  = 10; // gap between branch tip and text (left mode)
+const TEXT_GAP      = 8;  // gap between tracer end and text start (right mode) — matches v1
+const TIP_OFFSET    = 7;  // tracer start offset from branch tip
 
 /**
  * Renders a single leaf label in one of two modes:
  *
  * alignRight=false (default, "Align Tips Left"):
  *   - No tracer line
- *   - Text sits immediately to the right of the branch tip
+ *   - Text left-aligned, starts at branch tip + LEFT_TIP_GAP
  *
  * alignRight=true ("Align Tips Right"):
- *   - Dashed tracer line from branch tip to the right edge
- *   - Text is right-aligned at the fixed right edge (textAnchor="end")
+ *   - Dashed tracer from branch tip to (labelX - textLength)
+ *   - Text starts TEXT_GAP px after tracer end (textAnchor="start", flows right)
+ *   - Right edge of text ≈ labelX  ← consistent across all nodes
  *
- * Colours come from CSS (.rp-label, .rp-branch-tracer, .rp-label-highlight)
- * so dark-mode is automatically supported.
- *
- * @param {{
- *   x: number,        branch-tip pixel x
- *   y: number,        branch-tip pixel y
- *   labelX: number,   pixel x of the label anchor
- *                      - left mode:  same as x (text starts at tip)
- *                      - right mode: fixed right edge (text ends here)
- *   name: string,
- *   isHighlighted: boolean,
- *   alignRight: boolean,
- * }} props
+ * This mirrors v1's branch.jsx:
+ *   tracer_x2 = width - text_width
+ *   textX     = tracer_x2 + 8
  */
-const LeafLabel = ({ x, y, labelX, name, isHighlighted, alignRight }) => {
+const LeafLabel = ({ x, y, labelX, name, renamedLabel, isHighlighted, alignRight, onRename }) => {
+  const displayName = renamedLabel ?? name ?? '';
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempName, setTempName]   = useState('');
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) inputRef.current.focus();
+  }, [isEditing]);
+
+  // Hooks must be called before any early return
   if (!name) return null;
 
-  const textAnchor = alignRight ? 'end' : 'start';
-  const textX = alignRight ? labelX - 3 : labelX + 5;
-  const hasTracer = alignRight && labelX > x + 2;
-  const textLength = estimateTextWidth(name, LABEL_FONT_SIZE);
+  const handleDoubleClick = (e) => {
+    if (!onRename) return;
+    e.stopPropagation();
+    setTempName(displayName);
+    setIsEditing(true);
+  };
 
-  // Highlight rect sits behind the text
-  const highlightWidth = estimateTextWidth(name, LABEL_FONT_SIZE) + 4;
-  const highlightX = alignRight
-    ? labelX - highlightWidth - 2
-    : textX - 2;
+  const finishEditing = () => {
+    onRename?.(tempName);
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter')  finishEditing();
+    if (e.key === 'Escape') setIsEditing(false);
+  };
+
+  const textLength = estimateTextWidth(displayName, LABEL_FONT_SIZE);
+
+  // ── Right mode: tracer first, then text starts right after ──
+  const tracerEndX = alignRight ? labelX - textLength : x;
+  const textX      = alignRight ? tracerEndX + TEXT_GAP : x + LEFT_TIP_GAP;
+  const hasTracer  = alignRight && tracerEndX > x + TIP_OFFSET;
+
+  const highlightWidth = textLength + 4;
+  const highlightX     = textX - 2;
 
   return (
-    <g className='align-dash'>
-      {/* Always rendered — x2 collapses to x1 in left mode so CSS transition works */}
+    <g className="align-dash">
+      {/* Always in DOM so CSS transition can interpolate x2 */}
       <line
-        x1={x + 7}
-        x2={hasTracer ? labelX - textLength - 7 : x + 7}
+        x1={x + TIP_OFFSET}
+        x2={hasTracer ? tracerEndX : x + TIP_OFFSET}
         y1={y}
         y2={y}
         className="rp-branch-tracer"
       />
 
-      {isHighlighted && (
-        <rect
-          x={highlightX}
-          y={y - 9}
-          width={highlightWidth}
-          height={16}
-          className="rp-label-highlight"
-        />
+      {isEditing ? (
+        <foreignObject x={textX} y={y - 10} width="160" height="24">
+          <input
+            ref={inputRef}
+            value={tempName}
+            onChange={(e) => setTempName(e.target.value)}
+            onBlur={finishEditing}
+            onKeyDown={handleKeyDown}
+            className="rp-label-input"
+          />
+        </foreignObject>
+      ) : (
+        <>
+          {isHighlighted && (
+            <rect
+              x={highlightX}
+              y={y - 9}
+              width={highlightWidth}
+              height={16}
+              className="rp-label-highlight"
+            />
+          )}
+          <text
+            x={textX}
+            y={y}
+            textAnchor="start"
+            dominantBaseline="middle"
+            className="rp-label"
+            onDoubleClick={handleDoubleClick}
+            style={isHighlighted
+              ? { fill: 'black', fontWeight: 'bold' }
+              : { cursor: onRename ? 'text' : 'default' }
+            }
+          >
+            {displayName}
+          </text>
+        </>
       )}
-
-      <text
-        x={textX+10}
-        y={y}
-        textAnchor={textAnchor}
-        dominantBaseline="middle"
-        className="rp-label"
-        style={isHighlighted ? { fill: 'black', fontWeight: 'bold' } : undefined}
-      >
-        {name}
-      </text>
     </g>
   );
 };

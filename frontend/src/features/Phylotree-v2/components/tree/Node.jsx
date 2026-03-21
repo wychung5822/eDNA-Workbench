@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { estimateTextWidth } from '../../utils/textWidth';
 
-const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMenu, showInternalLabels }) => {
+const LABEL_FONT_SIZE = 14;
+
+const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMenu, showInternalLabels, alignRight = false, labelX = 0 }) => {
   const isInternal = data.children && data.children.length > 0;
   // Show label only for:
   //   - collapsed nodes (renamed placeholder)
@@ -24,6 +27,14 @@ const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMe
     labelText = "Double click to name"; 
     displayPlaceholder = true;
   }
+
+  // Align-right mode: internal node label gets a tracer + right-edge text (same as leaf labels)
+  const useAlignRight = alignRight && isInternal && showInternalLabels && !isCollapsed && labelX > x;
+  const textLength = useAlignRight ? estimateTextWidth(labelText ?? '', LABEL_FONT_SIZE) : 0;
+  // Coordinates in node-local space (origin = node position)
+  // Mirror v1: tracer ends at (labelX - textLength), text starts 8px after
+  const tracerX2   = useAlignRight ? Math.max(7, labelX - x - textLength) : 7;
+  const textLocalX = useAlignRight ? Math.max(8, tracerX2 + 8) : 8;
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -75,16 +86,31 @@ const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMe
                     onChange={(e) => setTempName(e.target.value)}
                     onBlur={finishEditing}
                     onKeyDown={handleKeyDown}
-                    style={{
-                        width: "100%",
-                        fontSize: "12px",
-                        padding: "2px",
-                        border: "1px solid var(--border)",
-                        borderRadius: "2px",
-                        outline: "none"
-                    }}
+                    className="rp-label-input"
                 />
             </foreignObject>
+        ) : useAlignRight ? (
+            /* Align-right mode: tracer to right edge + right-aligned text */
+            <g className="align-dash">
+              <line
+                x1={7}
+                x2={tracerX2}
+                y1={0}
+                y2={0}
+                className="rp-branch-tracer"
+              />
+              <text
+                x={textLocalX}
+                y={0}
+                textAnchor="start"
+                dominantBaseline="middle"
+                className="rp-label"
+                onDoubleClick={handleDoubleClick}
+                style={{ cursor: 'text', userSelect: 'none' }}
+              >
+                {labelText}
+              </text>
+            </g>
         ) : (
             <text
               onDoubleClick={handleDoubleClick}

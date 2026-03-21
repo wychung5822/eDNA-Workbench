@@ -100,6 +100,10 @@ const Phylotree = ({ onNodeRename }) => {
 
   if (!processedTree) return null;
 
+  // Align-right positioning for internal labels (mirrors LeafLabel logic)
+  const alignRight = settings.alignTips === 'right';
+  const labelXForNodes = alignRight ? (settings.width - 20 - 30) : 0; // TRANSLATE_X=20, RIGHT_MARGIN=30
+
   return (
     <g transform="translate(20, 0)">
       {/* 繪製分支 */}
@@ -133,6 +137,8 @@ const Phylotree = ({ onNodeRename }) => {
           isCollapsed={collapsedNodes.has(id)}
           renamedLabel={renamedNodes.get(id)}
           showInternalLabels={settings.showInternalLabels}
+          alignRight={alignRight}
+          labelX={labelXForNodes}
           onRename={(newName) => onNodeRename(id, newName)}
           onContextMenu={(e) => openContextMenu(e, id, nodeInfo, collapsedNodes.has(id))}
         />
@@ -141,10 +147,13 @@ const Phylotree = ({ onNodeRename }) => {
       {/* 繪製葉節點 Labels (tracer + text) */}
       {links
         .filter(link => !link.target.children || link.target.children.length === 0)
+        .filter(link => !collapsedNodes.has(link.target.unique_id))  // collapsed 節點由 Node.jsx 處理，避免重疊
         .map(link => {
           const info = leafLabelData.get(link.target.unique_id);
           if (!info?.name) return null;
-          const isHighlighted = !!(searchTerm && info.name.toLowerCase().includes(searchTerm.toLowerCase()));
+          const renamedLabel = renamedNodes.get(link.target.unique_id);
+          const displayName  = renamedLabel ?? info.name;
+          const isHighlighted = !!(searchTerm && displayName.toLowerCase().includes(searchTerm.toLowerCase()));
           return (
             <LeafLabel
               key={`label-${link.target.unique_id}`}
@@ -152,8 +161,10 @@ const Phylotree = ({ onNodeRename }) => {
               y={yScale(link.target.y ?? link.target.data?.abstract_y ?? 0)}
               labelX={info.labelX}
               name={info.name}
+              renamedLabel={renamedLabel}
               isHighlighted={isHighlighted}
               alignRight={settings.alignTips === 'right'}
+              onRename={(newName) => onNodeRename(link.target.unique_id, newName)}
             />
           );
         })}
