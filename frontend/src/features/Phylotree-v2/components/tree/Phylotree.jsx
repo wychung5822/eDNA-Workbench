@@ -12,6 +12,12 @@ import Node from './Node';
 
 import { collectInternalNodes, getHiddenBranches, shouldHideInternalNode } from '../../utils/TreeUtils';
 
+// Layout constants — single source of truth used throughout this file
+const TRANSLATE_X   = 20;  // matches <g transform="translate(20, 0)">
+const RIGHT_MARGIN  = 30;  // breathing room from SVG right edge
+const LABEL_FONT_SIZE = 14;
+const LABEL_GAP     = 5;   // px between tracer end and text
+
 const Phylotree = ({ onNodeRename }) => {
   const { state: { treeInstance, collapsedNodes, renamedNodes, merged }, openContextMenu } = useTree();
   const { settings, searchTerm } = useUI();
@@ -20,16 +26,14 @@ const Phylotree = ({ onNodeRename }) => {
   // 1. 計算佈局 (這會給每個節點加上 x, y 座標)
   const processedTree = useTreeLayout(treeInstance, settings, collapsedNodes, merged);
 
-  const { xScale, yScale, nodes, links, leafLabelData } = useMemo(() => {
-    if (!processedTree) return { nodes: [], links: [], leafLabelData: new Map() };
+  // Align-right positioning — derived from settings, used in useMemo and JSX
+  const alignRight = settings.alignTips === 'right';
+
+  const { xScale, yScale, nodes, links, leafLabelData, commonLabelX } = useMemo(() => {
+    if (!processedTree) return { nodes: [], links: [], leafLabelData: new Map(), commonLabelX: 0 };
 
     const padding = 20;
-    const LABEL_FONT_SIZE = 14;
-    const TRANSLATE_X = 20;  // matches <g transform="translate(20, 0)">
-    const RIGHT_MARGIN = 30; // breathing room from SVG right edge
-    const LABEL_GAP = 5;     // px between tip/tracer and text
 
-    const alignRight = settings.alignTips === 'right';
     // rightEdge is in the g's local coordinate system
     const rightEdge = settings.width - TRANSLATE_X - RIGHT_MARGIN;
 
@@ -45,22 +49,29 @@ const Phylotree = ({ onNodeRename }) => {
       textWidths.set(link.target.unique_id, estimateTextWidth(name, LABEL_FONT_SIZE));
     });
 
+    // --- maxTextWidth: widest leaf label ---
+    const maxTextWidth = textWidths.size > 0 ? Math.max(...textWidths.values()) : 0;
+
     // --- rightmost: branch drawing area width ---
-    // Constraint: tip_px + textWidth <= rightEdge   (left mode)
-    //          or tip_px <= rightEdge - textWidth   (right mode, same formula)
-    // tip_px = abstract_x * rightmost / max_x
-    // → rightmost <= (rightEdge - textWidth - LABEL_GAP) * max_x / abstract_x
+    // alignRight: all tips share one common tracer-end at (rightEdge - maxTextWidth),
+    //             so rightmost = rightEdge - maxTextWidth - LABEL_GAP
+    // left mode:  each tip + its own text width must fit within rightEdge (per-leaf)
     let rightmost = rightEdge;
     if (processedTree.max_x > 0 && leafLinks.length > 0) {
-      const candidates = leafLinks
-        .filter(l => (l.target.x ?? l.target.data?.abstract_x) > 0)
-        .map(l => {
-          const tw = textWidths.get(l.target.unique_id) ?? 0;
-          const ax = l.target.x ?? l.target.data?.abstract_x;
-          return ((rightEdge - tw - LABEL_GAP) * processedTree.max_x) / ax;
-        });
-      if (candidates.length > 0) {
-        rightmost = Math.max(50, Math.min(...candidates));
+      if (alignRight) {
+        // Uniform constraint — only the longest label defines the boundary
+        rightmost = Math.max(50, rightEdge - maxTextWidth - LABEL_GAP);
+      } else {
+        const candidates = leafLinks
+          .filter(l => (l.target.x ?? l.target.data?.abstract_x) > 0)
+          .map(l => {
+            const tw = textWidths.get(l.target.unique_id) ?? 0;
+            const ax = l.target.x ?? l.target.data?.abstract_x;
+            return ((rightEdge - tw - LABEL_GAP) * processedTree.max_x) / ax;
+          });
+        if (candidates.length > 0) {
+          rightmost = Math.max(50, Math.min(...candidates));
+        }
       }
     }
 
@@ -81,7 +92,9 @@ const Phylotree = ({ onNodeRename }) => {
       const tipX = xScale(link.target.x ?? link.target.data?.abstract_x ?? 0);
       leafLabelData.set(link.target.unique_id, {
         name,
-        labelX: alignRight ? rightEdge : tipX,
+        // alignRight: labelX = common tracer-end for all leaves (= rightEdge - maxTextWidth)
+        // left mode:  labelX = tipX (unused in left mode)
+        labelX: alignRight ? (rightEdge - maxTextWidth) : tipX,
       });
     });
 
@@ -95,14 +108,13 @@ const Phylotree = ({ onNodeRename }) => {
     const visibleNodes = Array.from(internalNodesMap.entries())
       .filter(([id, nodeInfo]) => !shouldHideInternalNode(id, nodeInfo, collapsedNodes));
 
-    return { xScale, yScale, nodes: visibleNodes, links: visibleLinks, leafLabelData };
-  }, [processedTree, settings, collapsedNodes]);
+    // commonLabelX: single tracer-end shared by ALL labels (leaf + internal) in right-align mode
+    const commonLabelX = alignRight ? (rightEdge - maxTextWidth) : 0;
+
+    return { xScale, yScale, nodes: visibleNodes, links: visibleLinks, leafLabelData, commonLabelX };
+  }, [processedTree, settings, collapsedNodes, alignRight]);
 
   if (!processedTree) return null;
-
-  // Align-right positioning for internal labels (mirrors LeafLabel logic)
-  const alignRight = settings.alignTips === 'right';
-  const labelXForNodes = alignRight ? (settings.width - 20 - 30) : 0; // TRANSLATE_X=20, RIGHT_MARGIN=30
 
   return (
     <g transform="translate(20, 0)">
@@ -113,8 +125,6 @@ const Phylotree = ({ onNodeRename }) => {
           link={link}
           xScale={xScale}
           yScale={yScale}
-          settings={settings}
-          searchTerm={searchTerm}
           onClick={() => console.log('Branch clicked', link)}
           onContextMenu={(e) => openContextMenu(e, link.target.unique_id, link.target, false)}
           onMouseMove={(e, targetNode) => {
@@ -138,7 +148,7 @@ const Phylotree = ({ onNodeRename }) => {
           renamedLabel={renamedNodes.get(id)}
           showInternalLabels={settings.showInternalLabels}
           alignRight={alignRight}
-          labelX={labelXForNodes}
+          labelX={commonLabelX}
           onRename={(newName) => onNodeRename(id, newName)}
           onContextMenu={(e) => openContextMenu(e, id, nodeInfo, collapsedNodes.has(id))}
         />

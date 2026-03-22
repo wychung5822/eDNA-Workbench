@@ -14,13 +14,11 @@ const TIP_OFFSET    = 7;  // tracer start offset from branch tip
  *   - Text left-aligned, starts at branch tip + LEFT_TIP_GAP
  *
  * alignRight=true ("Align Tips Right"):
- *   - Dashed tracer from branch tip to (labelX - textLength)
- *   - Text starts TEXT_GAP px after tracer end (textAnchor="start", flows right)
- *   - Right edge of text ≈ labelX  ← consistent across all nodes
- *
- * This mirrors v1's branch.jsx:
- *   tracer_x2 = width - text_width
- *   textX     = tracer_x2 + 8
+ *   - labelX = common tracer-end for ALL leaves (= rightEdge - maxTextWidth)
+ *   - Dashed tracer from branch tip to labelX
+ *   - Text starts TEXT_GAP px after labelX (textAnchor="start", flows right)
+ *   - All text left edges align at the same x ← consistent across all nodes
+ *   - Total boundary = labelX + TEXT_GAP + maxTextWidth
  */
 const LeafLabel = ({ x, y, labelX, name, renamedLabel, isHighlighted, alignRight, onRename }) => {
   const displayName = renamedLabel ?? name ?? '';
@@ -55,8 +53,9 @@ const LeafLabel = ({ x, y, labelX, name, renamedLabel, isHighlighted, alignRight
 
   const textLength = estimateTextWidth(displayName, LABEL_FONT_SIZE);
 
-  // ── Right mode: tracer first, then text starts right after ──
-  const tracerEndX = alignRight ? labelX - textLength : x;
+  // ── Right mode: labelX IS the common tracer-end (same for all leaves);
+  //    text left-aligns at tracerEndX + TEXT_GAP — consistent across all nodes.
+  const tracerEndX = alignRight ? labelX : x;
   const textX      = alignRight ? tracerEndX + TEXT_GAP : x + LEFT_TIP_GAP;
   const hasTracer  = alignRight && tracerEndX > x + TIP_OFFSET;
 

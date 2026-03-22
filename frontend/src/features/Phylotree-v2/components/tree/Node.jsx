@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { estimateTextWidth } from '../../utils/textWidth';
 
 const LABEL_FONT_SIZE = 14;
 
-const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMenu, showInternalLabels, alignRight = false, labelX = 0 }) => {
+const Node = ({ data, x, y, isCollapsed, renamedLabel, onRename, onContextMenu, showInternalLabels, alignRight = false, labelX = 0 }) => {
   const isInternal = data.children && data.children.length > 0;
   // Show label only for:
   //   - collapsed nodes (renamed placeholder)
@@ -15,8 +14,12 @@ const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMe
   const [tempName, setTempName] = useState("");
   const inputRef = useRef(null);
 
-  const radius = isInternal ? 4 : 3;
-  const fill = isCollapsed ? 'red' : (isInternal ? '#555' : '#999');
+  // Circle class drives size + colour via CSS (see .rp-node in phylotree.css)
+  const nodeClass = isCollapsed
+    ? 'rp-node rp-node--collapsed'
+    : isInternal
+      ? 'rp-node rp-node--internal'
+      : 'rp-node rp-node--leaf';
   
   let labelText = data.data.name;
   let displayPlaceholder = false;
@@ -28,12 +31,12 @@ const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMe
     displayPlaceholder = true;
   }
 
-  // Align-right mode: internal node label gets a tracer + right-edge text (same as leaf labels)
-  const useAlignRight = alignRight && isInternal && showInternalLabels && !isCollapsed && labelX > x;
-  const textLength = useAlignRight ? estimateTextWidth(labelText ?? '', LABEL_FONT_SIZE) : 0;
+  // Align-right mode: internal node label gets a tracer + left-aligned text (same as leaf labels)
+  // Root node (parent === null) is excluded — its label stays left at x=0
+  const useAlignRight = alignRight && isInternal && showInternalLabels && !isCollapsed && labelX > x && data.parent !== null;
   // Coordinates in node-local space (origin = node position)
-  // Mirror v1: tracer ends at (labelX - textLength), text starts 8px after
-  const tracerX2   = useAlignRight ? Math.max(7, labelX - x - textLength) : 7;
+  // labelX is the common tracer-end (absolute); convert to local: tracerX2 = labelX - x
+  const tracerX2   = useAlignRight ? Math.max(7, labelX - x) : 7;
   const textLocalX = useAlignRight ? Math.max(8, tracerX2 + 8) : 8;
 
   useEffect(() => {
@@ -67,12 +70,10 @@ const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMe
       {/* Single Node Circle with transparent stroke for hit area - ONLY for Internal or Collapsed */}
       {(isInternal || isCollapsed) && (
         <circle
-          r={radius}
-          fill={fill}
+          className={nodeClass}
           stroke="transparent"
-          strokeWidth="10" 
+          strokeWidth="10"
           onClick={onContextMenu}
-          style={{ cursor: isInternal ? 'pointer' : 'default' }}
         />
       )}
 
@@ -116,34 +117,14 @@ const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMe
               onDoubleClick={handleDoubleClick}
               x={8}
               y={4}
-              style={{ 
-                  fontSize: '12px', 
-                  fontFamily: 'Arial',
-                  fill: 'var(--text)',
-                  cursor: isCollapsed ? 'text' : 'default',
-                  userSelect: 'none'
-              }}
+              className="rp-label"
+              style={{ cursor: isCollapsed ? 'text' : 'default' }}
             >
               {labelText}
             </text>
         )
       )}
 
-      {/* Debug ID (Only for internal/collapsed nodes as requested) */}
-      {/* {(isInternal || isCollapsed) && (
-        <text
-          x="8"
-          y="4"
-          fill="red"
-          style={{
-            marginLeft: "10px",
-            fontSize: "10px",
-            fontWeight: "bold",
-          }}
-        >
-          {id}
-        </text>
-      )} */}
     </g>
   );
 };

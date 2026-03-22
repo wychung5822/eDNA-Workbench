@@ -1,5 +1,6 @@
 import { useTree } from '../../context/TreeContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
+import '../../styles/layout/Sidebar.css';
 
 const SidebarRight = () => {
   const { settings, updateSetting } = useUI();
@@ -9,7 +10,7 @@ const SidebarRight = () => {
     // 這裡可以呼叫原本的 ExportService
     if(treeInstance) {
        // Logic to export
-       console.log("Exporting Newick...");
+      console.log("Exporting Newick...");
     }
   };
 
@@ -32,16 +33,16 @@ const SidebarRight = () => {
         </div>
 
         <div style={{ marginBottom: '10px' }}>
-           <label>Sort Order:</label>
-           <select 
-             value={settings.sort || ''} 
-             onChange={(e) => updateSetting('sort', e.target.value || null)}
-             style={{ width: '100%', marginTop: '5px' }}
-           >
-             <option value="">None</option>
-             <option value="ascending">Ascending</option>
-             <option value="descending">Descending</option>
-           </select>
+          <label>Sort Order:</label>
+          <select 
+            value={settings.sort || ''} 
+            onChange={(e) => updateSetting('sort', e.target.value || null)}
+            style={{ width: '100%', marginTop: '5px' }}
+          >
+            <option value="">None</option>
+            <option value="ascending">Ascending</option>
+            <option value="descending">Descending</option>
+          </select>
         </div>
       </div>
 
@@ -72,13 +73,13 @@ const SidebarRight = () => {
         </div>
         
         <div>
-           <label>
-             <input 
-               type="checkbox"
-               checked={settings.showInternalLabels}
-               onChange={(e) => updateSetting('showInternalLabels', e.target.checked)}
-             /> Show Internal Labels
-           </label>
+          <label>
+            <input 
+              type="checkbox"
+              checked={settings.showInternalLabels}
+              onChange={(e) => updateSetting('showInternalLabels', e.target.checked)}
+            /> Show Internal Labels
+          </label>
         </div>
       </div>
 
