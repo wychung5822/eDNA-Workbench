@@ -1,7 +1,7 @@
 # Analysis Pipeline
 This tool processes raw Next-Generation Sequencing (NGS) reads from eDNA projects and separate them into projects, sampling sites, and species.
 
-**Inputs Required:**
+**Inputs:**
 *   **Paired-end reads:** FASTQ format. Files must be named with "R1" and "R2" (e.g., `eDNA_R1.fastq`, `eDNA_R2.fastq`).
 *   **Tags File:** A comma-separated file (CSV) containing 6 columns **without** titles: Project ID, Location ID, Forward Barcode, Forward Primer, Reverse Barcode, Reverse Primer (e.g., `tags.csv`).
 *   **Reference Sequence:** A FASTA format file from NCBI with species names in the defline (e.g., `NCBI_ref.fa`). To be uploaded at the workflow page.
@@ -35,7 +35,7 @@ Compressed files are provided for convenient download.
 5.  **ASV Identification:** Filters for Amplicon Sequence Variants based on copy number (default min: 3).
 6.  **Table Generation:** Produces Location-ASV tables.
 
-**Key Parameters:**
+**Configuration:**
 *   **Project Selection:** Run one project at a time.
 *   **Merged-read lengths:** Enter minimum and maximum lengths.
 *   **Identity %:** Default is 98% for species assignment.
