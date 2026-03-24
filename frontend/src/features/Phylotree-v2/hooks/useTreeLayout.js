@@ -1,5 +1,5 @@
 import { max } from "d3-array";
-import { useMemo } from 'react';
+import { useMemo } from "react";
 
 // ------------------------------------------------------------------
 // 1. 補回缺失的輔助函式與變數 (從原本的 phylotree.jsx 移植)
@@ -30,8 +30,8 @@ const sortNodes = (tree, direction) => {
   });
 
   const isAscending = direction === "ascending";
-  tree.resortChildren((a, b) => 
-    (a.count_depth - b.count_depth) * (isAscending ? 1 : -1)
+  tree.resortChildren(
+    (a, b) => (a.count_depth - b.count_depth) * (isAscending ? 1 : -1)
   );
 };
 
@@ -58,8 +58,8 @@ const assignThresholdIds = (tree, mergedChildrenIds) => {
   for (const [threshold, nodes] of thresholdGroups.entries()) {
     nodes.sort((a, b) => a.data.abstract_y - b.data.abstract_y);
     const originalIds = tree.thresholdIdMap?.[threshold] || [];
-    const availableIds = originalIds.filter(id => !mergedChildrenIds.has(id));
-    
+    const availableIds = originalIds.filter((id) => !mergedChildrenIds.has(id));
+
     nodes.forEach((node, index) => {
       if (index < availableIds.length) {
         node.unique_id = String(availableIds[index]);
@@ -91,16 +91,21 @@ const LayoutAlgorithms = {
     state.tree.max_x = Math.max(state.tree.max_x, node.data.abstract_x);
 
     if (node.children?.length) {
-      node.data.abstract_y = node.children
-        .map(child => LayoutAlgorithms.standard(child, xCalculator, accessor, state))
-        .reduce((sum, y) => sum + y, 0) / node.children.length;
+      node.data.abstract_y =
+        node.children
+          .map((child) =>
+            LayoutAlgorithms.standard(child, xCalculator, accessor, state)
+          )
+          .reduce((sum, y) => sum + y, 0) / node.children.length;
     } else {
-      state.currentLeafHeight = node.data.abstract_y = state.currentLeafHeight + 1;
+      state.currentLeafHeight = node.data.abstract_y =
+        state.currentLeafHeight + 1;
     }
 
     return node.data.abstract_y;
   },
 
+  // when show internal labels is true
   internal: (node, xCalculator, accessor, state) => {
     if (!node.children?.length) {
       state.uniqueId = node.unique_id = state.uniqueId + 1;
@@ -110,25 +115,31 @@ const LayoutAlgorithms = {
     state.tree.max_x = Math.max(state.tree.max_x, node.data.abstract_x);
 
     if (!state.tree.isLeafNode(node)) {
-      node.children?.forEach(child => 
+      node.children?.forEach((child) =>
         LayoutAlgorithms.internal(child, xCalculator, accessor, state)
       );
     }
 
-    if (!node.data.abstract_y && node.data.name !== "root") {
-      state.currentLeafHeight = node.data.abstract_y = state.currentLeafHeight + 1;
+    if (node.data.abstract_y == null && node.data.name !== "root") {
+      state.currentLeafHeight = node.data.abstract_y =
+        state.currentLeafHeight + 1;
       state.tree.node_order.push(node.data.name);
     }
 
-    if (node.parent && !node.parent.data.abstract_y && node.data.name !== "root") {
+    if (
+      node.parent &&
+      node.parent.data.abstract_y == null &&
+      node.data.name !== "root"
+    ) {
       if (node.parent.data.name !== "root") {
-        state.currentLeafHeight = node.parent.data.abstract_y = state.currentLeafHeight + 1;
+        state.currentLeafHeight = node.parent.data.abstract_y =
+          state.currentLeafHeight + 1;
         state.tree.node_order.push(node.parent.data.name);
       }
     }
 
     state.tree.max_y = Math.max(state.tree.max_y, state.currentLeafHeight);
-  }
+  },
 };
 
 const ThresholdIdManager = {
@@ -166,7 +177,7 @@ const ThresholdIdManager = {
       };
 
       if (mergedInfo.children) {
-        mergedInfo.children.forEach(childId => {
+        mergedInfo.children.forEach((childId) => {
           mergedChildrenIds.add(childId);
         });
       }
@@ -175,10 +186,12 @@ const ThresholdIdManager = {
     assignThresholdIds(tree, mergedChildrenIds);
 
     const sortedMergedIds = Object.entries(mergedIds).sort((a, b) => {
-      const getThreshold = id => parseInt(id.split("-")[0], 10);
-      const getYValue = id => parseInt(id.split("-")[1], 10);
+      const getThreshold = (id) => parseInt(id.split("-")[0], 10);
+      const getYValue = (id) => parseInt(id.split("-")[1], 10);
       const thresholdDiff = getThreshold(a[0]) - getThreshold(b[0]);
-      return thresholdDiff !== 0 ? thresholdDiff : getYValue(a[0]) - getYValue(b[0]);
+      return thresholdDiff !== 0
+        ? thresholdDiff
+        : getYValue(a[0]) - getYValue(b[0]);
     });
 
     sortedMergedIds.forEach(([mergedId, mergedInfo]) => {
@@ -191,24 +204,32 @@ const ThresholdIdManager = {
         }
       }
     });
-  }
+  },
 };
 
 // ------------------------------------------------------------------
 // 2. 原本的 placenodes 核心邏輯
 // ------------------------------------------------------------------
 
-const placenodes = (tree, performInternalLayout, accessor = defaultAccessor, sort, mergedNodes = {}) => {
+const placenodes = (
+  tree,
+  performInternalLayout,
+  accessor = defaultAccessor,
+  sort,
+  mergedNodes = {}
+) => {
   const state = {
     tree,
     currentLeafHeight: -1,
-    uniqueId: 0
+    uniqueId: 0,
   };
-  
+
   tree.max_x = 0;
 
   const hasBranchLengths = Boolean(accessor(tree.getTips()[0]));
-  const xCalculator = hasBranchLengths ? calculateXWithBranchLengths : calculateXWithoutBranchLengths;
+  const xCalculator = hasBranchLengths
+    ? calculateXWithBranchLengths
+    : calculateXWithoutBranchLengths;
 
   if (sort) {
     sortNodes(tree, sort);
@@ -217,13 +238,25 @@ const placenodes = (tree, performInternalLayout, accessor = defaultAccessor, sor
   if (performInternalLayout) {
     tree.max_y = 0;
     tree.node_order = [];
+    // Reset abstract_y on all nodes before running internal layout.
+    // The internal algorithm uses `!node.data.abstract_y` as a falsy guard to decide
+    // whether to assign a new Y position. If a previous `standard` run left positive
+    // abstract_y values on nodes, the guard would never trigger, currentLeafHeight
+    // would never increment, tree.max_y would stay 0, and the yScale domain would
+    // degenerate to [0,0] → all Y coords become NaN → every node collapses to a
+    // single horizontal line.
+    tree.traverse_and_compute((node) => {
+      node.data.abstract_y = undefined;
+      return true;
+    });
     LayoutAlgorithms.internal(tree.nodes, xCalculator, accessor, state);
-    
+
     const root = tree.getNodeByName("root");
     if (root?.children?.length) {
-      root.data.abstract_y = root.children
-        .map(child => child.data.abstract_y)
-        .reduce((sum, y) => sum + y, 0) / root.children.length;
+      root.data.abstract_y =
+        root.children
+          .map((child) => child.data.abstract_y)
+          .reduce((sum, y) => sum + y, 0) / root.children.length;
     }
   } else {
     LayoutAlgorithms.standard(tree.nodes, xCalculator, accessor, state);
@@ -263,18 +296,31 @@ const placenodes = (tree, performInternalLayout, accessor = defaultAccessor, sor
 // 3. 匯出 Hook
 // ------------------------------------------------------------------
 
-export const useTreeLayout = (treeInstance, settings, collapsedNodes, merged = {}) => {
+export const useTreeLayout = (
+  treeInstance,
+  settings,
+  collapsedNodes,
+  merged = {}
+) => {
   return useMemo(() => {
     if (!treeInstance) return null;
 
     placenodes(
       treeInstance,
-      settings.showInternalLabels,
+      settings.showInternalLabels, // Use internal layout algorithm when showing internal labels (aligns with v1 behavior)
       (node) => +node.data.attribute,
       settings.sort,
       merged
     );
 
     return treeInstance;
-  }, [treeInstance, settings.width, settings.height, settings.sort, collapsedNodes, settings.showInternalLabels, merged]);
+  }, [
+    treeInstance,
+    settings.width,
+    settings.height,
+    settings.sort,
+    collapsedNodes,
+    settings.showInternalLabels,
+    merged,
+  ]);
 };

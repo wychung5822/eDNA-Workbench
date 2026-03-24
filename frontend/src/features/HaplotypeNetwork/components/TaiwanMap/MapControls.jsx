@@ -56,7 +56,7 @@ const MapControls = ({
                   {map.name}
                 </option>
               ))}
-              <option value="Customize">Customize-Map</option>
+              <option value="Customize">Custom-Map</option>
             </select>
           </label>
         </div>

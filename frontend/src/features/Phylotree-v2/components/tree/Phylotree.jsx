@@ -2,63 +2,137 @@ import { scaleLinear } from 'd3-scale';
 import { useMemo } from 'react';
 import { useTree } from '../../context/TreeContext';
 import { useUI } from '../../context/UIContext';
+import { useTooltip } from '../../hooks/useTooltip';
 import { useTreeLayout } from '../../hooks/useTreeLayout';
+import { estimateTextWidth } from '../../utils/textWidth';
+import BranchTooltip from '../ui/BranchTooltip';
 import Branch from './Branch';
-import Node from './Node'; // 你需要把 InternalNode 和 NodeLabel 整合進這裡
+import LeafLabel from './LeafLabel';
+import Node from './Node';
 
 import { collectInternalNodes, getHiddenBranches, shouldHideInternalNode } from '../../utils/TreeUtils';
 
-const Phylotree = () => {
-  const { state: { treeInstance, collapsedNodes, renamedNodes, merged }, toggleCollapse, openContextMenu, renameNode } = useTree();
+// Layout constants — single source of truth used throughout this file
+const TRANSLATE_X   = 20;  // matches <g transform="translate(20, 0)">
+const RIGHT_MARGIN  = 30;  // breathing room from SVG right edge
+const LABEL_FONT_SIZE = 14;
+const LABEL_GAP     = 5;   // px between tracer end and text
+
+const Phylotree = ({ onNodeRename }) => {
+  const { state: { treeInstance, collapsedNodes, renamedNodes, merged }, openContextMenu } = useTree();
   const { settings, searchTerm } = useUI();
+  const { tooltip, showTooltip, hideTooltip } = useTooltip();
 
   // 1. 計算佈局 (這會給每個節點加上 x, y 座標)
   const processedTree = useTreeLayout(treeInstance, settings, collapsedNodes, merged);
 
-  // 2. 建立 Scales (如果沒有 processedTree 就回傳 null)
-  const { xScale, yScale, nodes, links } = useMemo(() => {
-    if (!processedTree) return { nodes: [], links: [] };
+  // Align-right positioning — derived from settings, used in useMemo and JSX
+  const alignRight = settings.alignTips === 'right';
 
-    // 簡單的 Scale 計算 (依照你的需求調整)
+  const { xScale, yScale, nodes, links, leafLabelData, commonLabelX } = useMemo(() => {
+    if (!processedTree) return { nodes: [], links: [], leafLabelData: new Map(), commonLabelX: 0 };
+
     const padding = 20;
-    const rightmost = settings.width - 150; // 預留 Label 空間
-    
+
+    // rightEdge is in the g's local coordinate system
+    const rightEdge = settings.width - TRANSLATE_X - RIGHT_MARGIN;
+
+    // --- Per-leaf text widths ---
+    const allLinks = processedTree.links;
+    const leafLinks = allLinks.filter(
+      l => !l.target.children || l.target.children.length === 0
+    );
+
+    const textWidths = new Map();
+    leafLinks.forEach(link => {
+      const name = link.target.data?.name ?? '';
+      textWidths.set(link.target.unique_id, estimateTextWidth(name, LABEL_FONT_SIZE));
+    });
+
+    // --- maxTextWidth: widest leaf label ---
+    const maxTextWidth = textWidths.size > 0 ? Math.max(...textWidths.values()) : 0;
+
+    // --- rightmost: branch drawing area width ---
+    // alignRight: all tips share one common tracer-end at (rightEdge - maxTextWidth),
+    //             so rightmost = rightEdge - maxTextWidth - LABEL_GAP
+    // left mode:  each tip + its own text width must fit within rightEdge (per-leaf)
+    let rightmost = rightEdge;
+    if (processedTree.max_x > 0 && leafLinks.length > 0) {
+      if (alignRight) {
+        // Uniform constraint — only the longest label defines the boundary
+        rightmost = Math.max(50, rightEdge - maxTextWidth - LABEL_GAP);
+      } else {
+        const candidates = leafLinks
+          .filter(l => (l.target.x ?? l.target.data?.abstract_x) > 0)
+          .map(l => {
+            const tw = textWidths.get(l.target.unique_id) ?? 0;
+            const ax = l.target.x ?? l.target.data?.abstract_x;
+            return ((rightEdge - tw - LABEL_GAP) * processedTree.max_x) / ax;
+          });
+        if (candidates.length > 0) {
+          rightmost = Math.max(50, Math.min(...candidates));
+        }
+      }
+    }
+
+    // --- Scales ---
     const xScale = scaleLinear()
       .domain([0, processedTree.max_x])
       .range([0, rightmost]);
-      
+
     const yScale = scaleLinear()
       .domain([0, processedTree.max_y])
       .range([padding, settings.height - padding]);
 
-    // 過濾掉隱藏的分支
+    // --- leafLabelData: pixel positions per leaf ---
+    const leafLabelData = new Map();
+    leafLinks.forEach(link => {
+      const name = link.target.data?.name ?? '';
+      if (!name) return;
+      const tipX = xScale(link.target.x ?? link.target.data?.abstract_x ?? 0);
+      leafLabelData.set(link.target.unique_id, {
+        name,
+        // alignRight: labelX = common tracer-end for all leaves (= rightEdge - maxTextWidth)
+        // left mode:  labelX = tipX (unused in left mode)
+        labelX: alignRight ? (rightEdge - maxTextWidth) : tipX,
+      });
+    });
+
+    // --- Visible links & nodes ---
     const hiddenBranches = getHiddenBranches(processedTree.nodes, collapsedNodes);
     const visibleLinks = processedTree.links.filter(
       link => !hiddenBranches.has(link.target.unique_id)
     );
-    
+
     const internalNodesMap = collectInternalNodes(processedTree.nodes);
     const visibleNodes = Array.from(internalNodesMap.entries())
-        .filter(([id, nodeInfo]) => !shouldHideInternalNode(id, nodeInfo, collapsedNodes));
+      .filter(([id, nodeInfo]) => !shouldHideInternalNode(id, nodeInfo, collapsedNodes));
 
-    return { xScale, yScale, nodes: visibleNodes, links: visibleLinks };
-  }, [processedTree, settings, collapsedNodes]);
+    // commonLabelX: single tracer-end shared by ALL labels (leaf + internal) in right-align mode
+    const commonLabelX = alignRight ? (rightEdge - maxTextWidth) : 0;
+
+    return { xScale, yScale, nodes: visibleNodes, links: visibleLinks, leafLabelData, commonLabelX };
+  }, [processedTree, settings, collapsedNodes, alignRight]);
 
   if (!processedTree) return null;
 
   return (
     <g transform="translate(20, 0)">
       {/* 繪製分支 */}
-      {links.map((link, i) => (
+      {links.map((link) => (
         <Branch 
-          key={`branch-${i}`}
+          key={`branch-${link.source.unique_id}-${link.target.unique_id}`}
           link={link}
           xScale={xScale}
           yScale={yScale}
-          settings={settings}
-          searchTerm={searchTerm}
           onClick={() => console.log('Branch clicked', link)}
           onContextMenu={(e) => openContextMenu(e, link.target.unique_id, link.target, false)}
+          onMouseMove={(e, targetNode) => {
+            const svg = e.currentTarget.ownerSVGElement;
+            const rect = svg.getBoundingClientRect();
+            showTooltip(e.clientX - rect.left, e.clientY - rect.top, targetNode);
+          }}
+          onMouseLeave={hideTooltip}
         />
       ))}
 
@@ -72,10 +146,45 @@ const Phylotree = () => {
           y={yScale(nodeInfo.y)}
           isCollapsed={collapsedNodes.has(id)}
           renamedLabel={renamedNodes.get(id)}
-          onRename={(newName) => renameNode(id, newName)}
+          showInternalLabels={settings.showInternalLabels}
+          alignRight={alignRight}
+          labelX={commonLabelX}
+          onRename={(newName) => onNodeRename(id, newName)}
           onContextMenu={(e) => openContextMenu(e, id, nodeInfo, collapsedNodes.has(id))}
         />
       ))}
+
+      {/* 繪製葉節點 Labels (tracer + text) */}
+      {links
+        .filter(link => !link.target.children || link.target.children.length === 0)
+        .filter(link => !collapsedNodes.has(link.target.unique_id))  // collapsed 節點由 Node.jsx 處理，避免重疊
+        .map(link => {
+          const info = leafLabelData.get(link.target.unique_id);
+          if (!info?.name) return null;
+          const renamedLabel = renamedNodes.get(link.target.unique_id);
+          const displayName  = renamedLabel ?? info.name;
+          const isHighlighted = !!(searchTerm && displayName.toLowerCase().includes(searchTerm.toLowerCase()));
+          return (
+            <LeafLabel
+              key={`label-${link.target.unique_id}`}
+              x={xScale(link.target.x ?? link.target.data?.abstract_x ?? 0)}
+              y={yScale(link.target.y ?? link.target.data?.abstract_y ?? 0)}
+              labelX={info.labelX}
+              name={info.name}
+              renamedLabel={renamedLabel}
+              isHighlighted={isHighlighted}
+              alignRight={settings.alignTips === 'right'}
+              onRename={(newName) => onNodeRename(link.target.unique_id, newName)}
+            />
+          );
+        })}
+
+      {/* Tooltip — 永遠渲染在最上層 */}
+      <BranchTooltip
+        tooltip={tooltip}
+        svgWidth={settings.width}
+        svgHeight={settings.height}
+      />
     </g>
   );
 };

@@ -1,35 +1,32 @@
 import { useTree } from '../../context/TreeContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
+import '../../styles/layout/Sidebar.css';
 
 const SidebarLeft = () => {
   const { state: { loading, error } } = useTree();
   const { searchTerm, setSearchTerm } = useUI();
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '15px' }}>Data & Search</h2>
-      
-      {/* File Upload handled globally */}
-      <div style={{ marginBottom: '20px' }}>
-        {loading && <p>Loading tree...</p>}
-        {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+    <div className="sidebar-panel">
+      <h2 className="sidebar-panel__title">Data &amp; Search</h2>
+
+      <div className="sidebar-panel__section">
+        {loading && <p className="sidebar-panel__status">Loading tree...</p>}
+        {error   && <p className="sidebar-panel__status sidebar-panel__status--error">Error: {error}</p>}
       </div>
 
-      <hr style={{ margin: '20px 0', borderTop: '1px solid #ddd' }} />
+      <hr className="sidebar-panel__divider" />
 
-      {/* Search */}
-      <div style={{ marginBottom: '20px' }}>
-        <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.9rem' }}>Search Nodes</label>
-        <input 
-          type="text" 
+      <div className="sidebar-panel__section">
+        <label className="sidebar-panel__label">Search Nodes</label>
+        <input
+          type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Species name..."
-          style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+          className="sidebar-panel__input"
         />
       </div>
-      
-      {/* 可以在這裡列出搜尋結果列表 */}
     </div>
   );
 };

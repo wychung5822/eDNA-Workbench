@@ -14,6 +14,40 @@ export const api = {
   // Check docker environment
   docker: {
     checkEnvironment: () => apiClient.get("/docker/check"),
+
+    /**
+     * Open an SSE stream to pull the Docker image.
+     * @param {Object} callbacks - { onProgress(msg), onDone(), onError(msg) }
+     * @returns {EventSource} - call .close() to abort
+     */
+    pullImage: (callbacks = {}) => {
+      const { onProgress, onDone, onError } = callbacks;
+      const es = new EventSource(`${API_BASE_URL}/docker/pull`);
+
+      es.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === "done") {
+            es.close();
+            if (onDone) onDone();
+          } else if (data.type === "error") {
+            es.close();
+            if (onError) onError(data.message);
+          } else if (data.type === "progress" || data.type === "start") {
+            if (onProgress) onProgress(data.message);
+          }
+        } catch {
+          // ignore parse errors
+        }
+      };
+
+      es.onerror = () => {
+        es.close();
+        if (onError) onError("Connection to server lost");
+      };
+
+      return es;
+    },
   },
 
   // File upload
@@ -132,7 +166,9 @@ export const api = {
     list: () => apiClient.get("outputs/list"),
 
     previewFile: (category, species, fileName) => {
-      return apiClient.post(`outputs/preview/${category}/${species}/${fileName}`)
+      return apiClient.post(
+        `outputs/preview/${category}/${species}/${fileName}`
+      );
     },
 
     getDownloadUrl: (category, species, fileName) => {
@@ -144,7 +180,9 @@ export const api = {
     },
 
     getDownloadAllFilesUrl: (project) => {
-      return `${API_BASE_URL}/outputs/download-all-files?project=${project || ""}`;
+      return `${API_BASE_URL}/outputs/download-all-files?project=${
+        project || ""
+      }`;
     },
   },
 };

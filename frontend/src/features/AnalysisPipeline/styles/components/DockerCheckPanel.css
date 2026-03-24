@@ -1,9 +1,9 @@
-/* src/styles/DockerCheckPanel.css */
-
+/* src/styles/components/DockerCheckPanel.css */
 .docker-check-panel {
   margin-bottom: 30px;
 }
 
+/* ── Header ── */
 .panel-header {
   text-align: center;
   margin-bottom: 2rem;
@@ -32,6 +32,7 @@
   color: var(--detail);
 }
 
+/* ── Spinner ── */
 .check-status {
   margin: 2rem 0;
 }
@@ -52,11 +53,10 @@
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
+/* ── Status List ── */
 .status-list {
   display: flex;
   flex-direction: column;
@@ -67,46 +67,58 @@
 .status-item {
   display: flex;
   align-items: center;
+  gap: 10px;
   padding: 1rem 2rem;
   border-radius: 8px;
-  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-surface) 60%, transparent 40%);
+  border: 3px solid var(--border);
   transition: all 0.3s ease;
 }
 
+/* 左側指示點 */
+.status-item::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .status-item.success {
-  background: color-mix(in srgb, var(--success) 20%, var(--bg-surface) 80%);
-  color: var(--success);
-  border-color: color-mix(in srgb, var(--success) 50%, var(--bg-surface) 50%);
+  border-color: color-mix(in srgb, var(--success) 60%, transparent 40%);
+  background: color-mix(in srgb, var(--success) 8%, var(--bg-surface) 92%);
+}
+.status-item.success::before {
+  background: var(--success);
 }
 
 .status-item.error {
-  background: color-mix(in srgb, var(--danger) 20%, var(--bg-surface) 80%);
-  color: var(--danger);
-  border-color: color-mix(in srgb, var(--danger) 50%, var(--bg-surface) 50%);
+  border-color: color-mix(in srgb, var(--danger) 60%, transparent 40%);
+  background: color-mix(in srgb, var(--danger) 8%, var(--bg-surface) 92%);
+}
+.status-item.error::before {
+  background: var(--danger);
 }
 
 .status-item.warning {
-  background: color-mix(in srgb, var(--warning) 20%, var(--bg-surface) 80%);
-  color: var(--warning);
-  border-color: color-mix(in srgb, var(--warning) 50%, var(--bg-surface) 50%);
+  border-color: color-mix(in srgb, var(--warning) 60%, transparent 40%);
+  background: color-mix(in srgb, var(--warning) 8%, var(--bg-surface) 92%);
 }
-
-.status-icon {
-  font-size: 1.5rem;
-  margin-right: 1rem;
+.status-item.warning::before {
+  background: var(--warning);
 }
 
 .status-label {
   flex: 1;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text);
 }
 
 .status-value {
-  color: var(--detail);
-  font-size: 0.9rem;
+  font-weight: 600;
 }
 
+/* ── Guide Button ── */
 .button-container {
   display: flex;
   justify-content: center;
@@ -126,11 +138,11 @@
 }
 
 .instruction-toggle:hover {
-  /* background-color: var(--border); */
   background: color-mix(in srgb, var(--bg-surface-raised) 85%, var(--text) 15%);
   border-color: var(--text);
 }
 
+/* ── Instructions Panel ── */
 .instructions-panel {
   margin-top: 1.5rem;
   padding: 1.5rem;
@@ -154,10 +166,14 @@
 }
 
 .instructions-content p.note {
-  background: rgba(245, 158, 11, 0.1);
+  background: color-mix(in srgb, var(--warning) 10%, transparent 90%);
   padding: 0.75rem;
   border-radius: 6px;
-  border-left: 3px solid #f59e0b;
+  border-left: 3px solid var(--warning);
+}
+
+.download-links {
+  margin-bottom: 1rem;
 }
 
 .download-button {
@@ -167,7 +183,7 @@
   gap: 0.5rem;
   padding: 1rem;
   background: var(--bg-surface-raised);
-  border: 2px solid #5490e8;
+  border: 2.5px solid #5490e8;
   border-radius: 8px;
   color: #5490e8;
   text-decoration: none;
@@ -179,11 +195,6 @@
   border-color: #5490e8;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px #5490e8;
-}
-
-.download-button svg {
-  width: 32px;
-  height: 32px;
 }
 
 .instruction-steps {
@@ -211,11 +222,12 @@
   background: var(--bg-code);
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
-  font-family: 'Courier New', monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.9rem;
   color: var(--text-code);
 }
 
+/* ── Panel Actions ── */
 .panel-actions {
   display: flex;
   gap: 1rem;
@@ -229,7 +241,7 @@
   border: none;
   border-radius: 8px;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -246,15 +258,13 @@
 }
 
 .next-button {
-  /* background: linear-gradient(135deg, #2496ed 0%, #1a7bc4 100%); */
-  background: var(--primary);
-  color: var(--bg-surface);
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-surface-raised) 92%);
+  color: var(--primary);
+  border: 2px solid color-mix(in srgb, var(--primary) 40%, transparent 60%);
 }
 
 .next-button:hover:not(:disabled) {
-  /* background: linear-gradient(135deg, #1a7bc4 0%, #15629e 100%); */
-  background: color-mix(in srgb, var(--primary) 60%, var(--bg-page) 40%);
-
+  background: color-mix(in srgb, var(--primary) 50%, var(--bg-page) 50%);
 }
 
 .recheck-button:disabled,
@@ -262,4 +272,43 @@
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+}
+
+/* ── Pull Progress Log ── */
+.pull-log-box {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-code, #1a1a2e);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  max-height: 220px;
+  overflow-y: auto;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.pull-log-line {
+  color: var(--text-code);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.pull-log-cursor {
+  color: var(--primary);
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.pull-error {
+  margin-top: 0.75rem;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--danger) 10%, transparent 90%);
+  border-left: 3px solid var(--danger);
+  color: var(--danger);
+  font-size: 0.9rem;
 }

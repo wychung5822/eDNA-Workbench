@@ -30,10 +30,13 @@ const storage = multer.diskStorage({
 
 // File filter
 const fileFilter = (req, file, cb) => {
-  const allowedExtensions = [".fq", ".fastq", ".fa", ".fasta", ".csv"];
+  const allowedExtensions = [".fq", ".fastq", ".fa", ".fasta", ".csv", ".zip", ".7z", ".rar", ".tar", ".gz", ".tar.gz"];
   const ext = path.extname(file.originalname).toLowerCase();
+  
+  // also handle double extensions like .tar.gz
+  const isTarGz = file.originalname.toLowerCase().endsWith(".tar.gz");
 
-  if (allowedExtensions.includes(ext)) {
+  if (allowedExtensions.includes(ext) || isTarGz) {
     cb(null, true);
   } else {
     cb(

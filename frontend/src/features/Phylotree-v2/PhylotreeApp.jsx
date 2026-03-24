@@ -1,17 +1,19 @@
 import { useEffect } from 'react';
 import MainLayout from './components/layout/MainLayout';
 import { TreeProvider, useTree } from './context/TreeContext';
-import { UIProvider } from './context/UIContext';
+import { UIProvider, useUI } from './context/UIContext';
 import './styles/phylotree.css';
 
 function TreeLoader({ data }) {
-  const { loadNewick } = useTree();
+  const { loadNewFile } = useTree();
+  const { resetSettings } = useUI();
 
   useEffect(() => {
     if (data) {
-      loadNewick(data);
+      loadNewFile(data);
+      resetSettings();
     }
-  }, [data, loadNewick]);
+  }, [data, loadNewFile, resetSettings]);
 
   return null;
 }

@@ -1,30 +1,43 @@
 import { useEffect, useRef, useState } from 'react';
 
-const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMenu }) => {
+const LABEL_FONT_SIZE = 14;
+
+const Node = ({ data, x, y, isCollapsed, renamedLabel, onRename, onContextMenu, showInternalLabels, alignRight = false, labelX = 0 }) => {
   const isInternal = data.children && data.children.length > 0;
-  const showLabel = !isInternal || isCollapsed; // Show label if leaf or collapsed
+  // Show label only for:
+  //   - collapsed nodes (renamed placeholder)
+  //   - internal nodes when showInternalLabels is on
+  // Leaf node text is handled exclusively by LeafLabel.jsx
+  const showLabel = isCollapsed || (isInternal && showInternalLabels && data.data.name);
   
   const [isEditing, setIsEditing] = useState(false);
   const [tempName, setTempName] = useState("");
   const inputRef = useRef(null);
 
-  const radius = isInternal ? 4 : 3;
-  const fill = isCollapsed ? 'red' : (isInternal ? '#555' : '#999');
+  // Circle class drives size + colour via CSS (see .rp-node in phylotree.css)
+  const nodeClass = isCollapsed
+    ? 'rp-node rp-node--collapsed'
+    : isInternal
+      ? 'rp-node rp-node--internal'
+      : 'rp-node rp-node--leaf';
   
-  // Label text logic
-  // If expanded: use original data.name (trust degree)
-  // If collapsed: use renamedLabel. If renamedLabel is empty, show "Double click to name" as placeholder.
   let labelText = data.data.name;
   let displayPlaceholder = false;
 
-  if (isCollapsed) {
-    if (renamedLabel) {
-        labelText = renamedLabel;
-    } else {
-        labelText = "Double click to name"; 
-        displayPlaceholder = true;
-    }
+  if (renamedLabel) {
+    labelText = renamedLabel;
+  } else if (isCollapsed) {
+    labelText = "Double click to name"; 
+    displayPlaceholder = true;
   }
+
+  // Align-right mode: internal node label gets a tracer + left-aligned text (same as leaf labels)
+  // Root node (parent === null) is excluded — its label stays left at x=0
+  const useAlignRight = alignRight && isInternal && showInternalLabels && !isCollapsed && labelX > x && data.parent !== null;
+  // Coordinates in node-local space (origin = node position)
+  // labelX is the common tracer-end (absolute); convert to local: tracerX2 = labelX - x
+  const tracerX2   = useAlignRight ? Math.max(7, labelX - x) : 7;
+  const textLocalX = useAlignRight ? Math.max(8, tracerX2 + 8) : 8;
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -33,12 +46,10 @@ const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMe
   }, [isEditing]);
 
   const handleDoubleClick = (e) => {
-    if (isCollapsed) {
-        e.stopPropagation();
-        setIsEditing(true);
-        // If it's a placeholder, start with empty string. Otherwise use the existing name.
-        setTempName(displayPlaceholder ? "" : labelText);
-    }
+    e.stopPropagation();
+    setIsEditing(true);
+    // If it's a placeholder, start with empty string. Otherwise use the existing name.
+    setTempName(displayPlaceholder ? "" : labelText);
   };
 
   const handleKeyDown = (e) => {
@@ -50,23 +61,21 @@ const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMe
   };
 
   const finishEditing = () => {
-    if (tempName.trim() !== "") {
-        onRename(tempName);
-    }
+    onRename(tempName);
     setIsEditing(false);
   };
 
   return (
     <g transform={`translate(${x}, ${y})`}>
-      {/* Single Node Circle with transparent stroke for hit area */}
-      <circle
-        r={radius}
-        fill={fill}
-        stroke="transparent"
-        strokeWidth="10" 
-        onClick={onContextMenu}
-        style={{ cursor: isInternal ? 'pointer' : 'default' }}
-      />
+      {/* Single Node Circle with transparent stroke for hit area - ONLY for Internal or Collapsed */}
+      {(isInternal || isCollapsed) && (
+        <circle
+          className={nodeClass}
+          stroke="transparent"
+          strokeWidth="10"
+          onClick={onContextMenu}
+        />
+      )}
 
       {/* Label or Input */}
       {showLabel && (
@@ -78,46 +87,44 @@ const Node = ({ id, data, x, y, isCollapsed, renamedLabel, onRename, onContextMe
                     onChange={(e) => setTempName(e.target.value)}
                     onBlur={finishEditing}
                     onKeyDown={handleKeyDown}
-                    style={{
-                        width: "100%",
-                        fontSize: "12px",
-                        padding: "2px",
-                        border: "1px solid #ccc",
-                        borderRadius: "2px",
-                        outline: "none"
-                    }}
+                    className="rp-label-input"
                 />
             </foreignObject>
+        ) : useAlignRight ? (
+            /* Align-right mode: tracer to right edge + right-aligned text */
+            <g className="align-dash">
+              <line
+                x1={7}
+                x2={tracerX2}
+                y1={0}
+                y2={0}
+                className="rp-branch-tracer"
+              />
+              <text
+                x={textLocalX}
+                y={0}
+                textAnchor="start"
+                dominantBaseline="middle"
+                className="rp-label"
+                onDoubleClick={handleDoubleClick}
+                style={{ cursor: 'text', userSelect: 'none' }}
+              >
+                {labelText}
+              </text>
+            </g>
         ) : (
             <text
               onDoubleClick={handleDoubleClick}
               x={8}
               y={4}
-              style={{ 
-                  fontSize: '12px', 
-                  fontFamily: 'Arial',
-                  fill: '#333',
-                  cursor: isCollapsed ? 'text' : 'default',
-                  userSelect: 'none'
-              }}
+              className="rp-label"
+              style={{ cursor: isCollapsed ? 'text' : 'default' }}
             >
               {labelText}
             </text>
         )
       )}
 
-      {/* Debug ID (Optional, requested by user earlier) */}
-      <text
-        x="8"
-        y="4"
-        fill="red"
-        style={{
-          fontSize: "10px",
-          fontWeight: "bold",
-        }}
-      >
-        {id}
-      </text>
     </g>
   );
 };

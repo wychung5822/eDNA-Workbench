@@ -21,7 +21,7 @@ export const getSubtreeNewick = (node) => {
 export const convertToNewick = (node, collapsedNodes, renamedNodes, depth = 0) => {
   if (node.unique_id && collapsedNodes.has(node.unique_id)) {
     if (renamedNodes.has(node.unique_id)) {
-      const newName = renamedNodes.get(node.unique_id);
+      const newName = renamedNodes.get(node.unique_id) || "";
       const branchLength = node.data.attribute
         ? `:${node.data.attribute}`
         : "";
@@ -33,8 +33,8 @@ export const convertToNewick = (node, collapsedNodes, renamedNodes, depth = 0) =
   }
 
   if (!node.children || node.children.length === 0) {
-    const name = node.data.name || "";
-    const branchLength = node.data.attribute ? `:${node.data.attribute}` : "";
+    const name = node.data?.name || "";
+    const branchLength = node.data?.attribute ? `:${node.data.attribute}` : "";
     const needQuotes = /[,;:()[\]]/g.test(name);
     return needQuotes ? `'${name}'${branchLength}` : `${name}${branchLength}`;
   }
@@ -50,8 +50,8 @@ export const convertToNewick = (node, collapsedNodes, renamedNodes, depth = 0) =
     )
     .join(",");
 
-  const name = node.data.name || "";
-  const branchLength = node.data.attribute ? `:${node.data.attribute}` : "";
+  const name = node.data?.name || "";
+  const branchLength = node.data?.attribute ? `:${node.data.attribute}` : "";
 
   if (depth === 0) {
     return `(${childrenNewick})${name}${branchLength};`;
