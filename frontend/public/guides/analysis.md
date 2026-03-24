@@ -7,13 +7,11 @@ This tool processes raw Next-Generation Sequencing (NGS) reads from eDNA project
 *   **Reference Sequence:** A FASTA format file from NCBI with species names in the defline (e.g., `NCBI_ref.fa`). To be uploaded at the workflow page.
 
 **Outputs:**
-The pipeline produces summary and species-level files upon completion.
-**1. General Summary**
+The pipeline produces summary and species-level files upon completion.  
+**1. General Summary:** Summary for all species
 *   **Location vs. Species Table:** A comma-separated (CSV) file summarizing ASV counts for each location against identified species, found at the top of the results page.
 
-**2. Individual Species Files**
-For each identified species, the pipeline generates three files:
-
+**2. Individual Species Files:** For each identified species, the pipeline generates three files:
 *   **Multiple Sequence Alignment (MSA):** A FASTA file containing aligned sequences.
     *   *Defline Format:* `>ProjectID_ReadIndex_LocationID,ASV_Index_Count`
     *   *Example:* `>ZpDL_139_YTR,ASV_0_5` (separated by comma and then by underscore)
