@@ -14,10 +14,11 @@ The pipeline produces summary and species-level files upon completion.
 **2. Individual Species Files:** For each identified species, the pipeline generates three files:
 *   **Multiple Sequence Alignment (MSA):** A FASTA file containing aligned sequences.
     *   *Defline Format:* `>ProjectID_ReadIndex_LocationID,ASV_Index_Count`
-    *   *Example:* `>ZpDL_139_YTR,ASV_0_5` (separated by comma and then by underscore)
+    *   *Example:* `>R1f_139_ZpDL_YTR,ASV_0_5` (separated by comma and then by underscore)
     *   *Key:* 
-    *   *   **ZpDL:** Project ID
+    *   *   **R1f:** Read pair orientation
         *   **139:** Read index number from the raw FASTQ file
+        *   **ZpDL:** Project ID
         *   **YTR:** Location ID
         *   **ASV:** Indicate ASV information
         *   **0:** ASV index 0
