@@ -1,7 +1,8 @@
 
 import { useTree } from '../../context/TreeContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
-import { convertToNewick, findNodeById, getSubtreeNewick, replaceNodeWithSubtree, rerootTree } from '../../utils/TreeUtils.js';
+import { convertToNewick, getSubtreeNewick } from '../../utils/newickUtils.js';
+import { findNodeById, replaceNodeWithSubtree, rerootTree } from '../../utils/treeOps.js';
 import Phylotree from '../tree/Phylotree.jsx';
 import ContextMenu from '../ui/ContextMenu.jsx';
 

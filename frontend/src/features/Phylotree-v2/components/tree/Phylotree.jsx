@@ -10,7 +10,7 @@ import Branch from './Branch';
 import LeafLabel from './LeafLabel';
 import Node from './Node';
 
-import { collectInternalNodes, getHiddenBranches, shouldHideInternalNode } from '../../utils/TreeUtils';
+import { collectInternalNodes, getHiddenBranches, shouldHideInternalNode } from '../../utils/renderUtils';
 
 // Layout constants — single source of truth used throughout this file
 const TRANSLATE_X   = 20;  // matches <g transform="translate(20, 0)">
