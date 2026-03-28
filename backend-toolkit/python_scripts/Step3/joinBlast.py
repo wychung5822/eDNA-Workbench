@@ -103,8 +103,8 @@ class BLASTTools:
                 with open(output_file, 'w', encoding='utf-8') as outfile:
                     for line in infile:
                         if line.startswith('>'):
-                            # Replace spaces with hyphens in header
-                            outfile.write(line.replace(' ', '-'))
+                            # Remove commas and replace spaces with hyphens in header
+                            outfile.write(line.replace(',', '').replace(' ', '-'))
                             count += 1
                         else:
                             outfile.write(line)
