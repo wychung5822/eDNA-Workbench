@@ -103,6 +103,16 @@ export const replaceNodeWithSubtree = (tree, leafNodeId, newNewick) => {
   const subtreeRoot = new phylotree(newNewick).nodes;
   subtreeRoot.parent = parentNode;
   subtreeRoot.data.attribute = targetNode.data.attribute;
+
+  // Fix: phylotree auto-assigns "root" as the default name for the parsed root node.
+  // Extract the actual root name from the Newick string to avoid introducing a stray "root" label.
+  const lastParen = newNewick.lastIndexOf(')');
+  if (lastParen !== -1) {
+    const afterParen = newNewick.substring(lastParen + 1);
+    const nameMatch = afterParen.match(/^([^:;]*)/);
+    subtreeRoot.data.name = nameMatch ? nameMatch[1] : "";
+  }
+
   parentNode.children[indexInParent] = subtreeRoot;
 
   return convertToNewick(tree.nodes, new Set(), new Map());
