@@ -150,14 +150,14 @@ const ThresholdIdManager = {
     for (const [threshold, nodes] of thresholdGroups.entries()) {
       nodes.sort((a, b) => a.data.abstract_y - b.data.abstract_y);
       nodes.forEach((node, index) => {
-        node.unique_id = `${threshold}-${index}`;
+        node.unique_id = `${threshold}|${index}`;
       });
     }
 
     const thresholdIdMap = {};
     tree.traverse_and_compute((node) => {
       if (!tree.isLeafNode(node) && typeof node.unique_id === "string") {
-        const [threshold] = String(node.unique_id).split("-");
+        const [threshold] = String(node.unique_id).split("|");
         if (!thresholdIdMap[threshold]) {
           thresholdIdMap[threshold] = [];
         }
@@ -189,8 +189,8 @@ const ThresholdIdManager = {
     assignThresholdIds(tree, mergedChildrenIds);
 
     const sortedMergedIds = Object.entries(mergedIds).sort((a, b) => {
-      const getThreshold = (id) => parseInt(id.split("-")[0], 10);
-      const getYValue = (id) => parseInt(id.split("-")[1], 10);
+      const getThreshold = (id) => parseFloat(id.split("|")[0]);
+      const getYValue = (id) => parseInt(id.split("|")[1], 10);
       const thresholdDiff = getThreshold(a[0]) - getThreshold(b[0]);
       return thresholdDiff !== 0
         ? thresholdDiff
