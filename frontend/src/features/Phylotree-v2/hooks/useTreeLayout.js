@@ -57,7 +57,10 @@ const assignThresholdIds = (tree, mergedChildrenIds) => {
 
   for (const [threshold, nodes] of thresholdGroups.entries()) {
     nodes.sort((a, b) => a.data.abstract_y - b.data.abstract_y);
+    // Step 1: Assign unique IDs to all nodes at this threshold, skipping merged children
+    // originalIds are the IDs that were previously assigned to nodes at this threshold (from the persistent map)
     const originalIds = tree.thresholdIdMap?.[threshold] || [];
+    // availableIds are the IDs that are not currently taken by merged children at this threshold
     const availableIds = originalIds.filter((id) => !mergedChildrenIds.has(id));
 
     nodes.forEach((node, index) => {
@@ -194,16 +197,19 @@ const ThresholdIdManager = {
         : getYValue(a[0]) - getYValue(b[0]);
     });
 
+    // Step 2: Convert all merged leaf nodes back to pseudo-internal
     sortedMergedIds.forEach(([mergedId, mergedInfo]) => {
       const parentNode = findNodeById(tree, mergedInfo.parent);
       if (parentNode?.children) {
         const nodeToModify = parentNode.children[mergedInfo.siblingIndex];
         if (nodeToModify) {
           setNodeAsNonLeaf(tree, nodeToModify);
-          assignThresholdIds(tree, mergedChildrenIds);
         }
       }
     });
+
+    // Step 3: Final ID assignment with all nodes properly categorized
+    assignThresholdIds(tree, mergedChildrenIds);
   },
 };
 
@@ -314,13 +320,15 @@ export const useTreeLayout = (
     );
 
     return treeInstance;
-  }, [
-    treeInstance,
-    settings.width,
-    settings.height,
-    settings.sort,
-    collapsedNodes,
-    settings.showInternalLabels,
-    merged,
-  ]);
+    // NOTE: `collapsedNodes` is intentionally excluded — it is NOT used inside
+    // placenodes and only affects visibility filtering (handled by Phylotree.jsx).
+    // Including it here causes placenodes to run on a STALE treeInstance when
+    // collapsedNodes/merged are updated but treeInstance hasn't been re-parsed yet
+    // (useEffect fires after render), producing duplicate unique_ids.
+    // `merged` always changes in the same event as `loadNewick`, so by the time
+    // a new treeInstance arrives, merged is already correct in the closure.
+    // `settings.width` and `settings.height` are used in Phylotree.jsx (scales,
+    // rightEdge) and TreeViewer.jsx (SVG dimensions), not in placenodes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [treeInstance, settings.sort, settings.showInternalLabels]);
 };
