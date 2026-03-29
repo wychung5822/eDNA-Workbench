@@ -8,10 +8,29 @@ const SidebarRight = () => {
   const { state: { treeInstance, collapsedNodes, renamedNodes } } = useTree();
 
   const handleExportNewick = () => {
-    // 這裡可以呼叫原本的 ExportService
-    if(treeInstance) {
-       // Logic to export
-      console.log("Exporting Newick...");
+    if (!treeInstance?.nodes) {
+      alert('No tree data to export.');
+      return;
+    }
+
+    try {
+      const newickString = convertToNewick(
+        treeInstance.nodes,
+        collapsedNodes,
+        renamedNodes
+      );
+
+      const blob = new Blob([newickString], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'exported_tree.nwk';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      alert(`Export failed: ${error.message}`);
     }
   };
 
