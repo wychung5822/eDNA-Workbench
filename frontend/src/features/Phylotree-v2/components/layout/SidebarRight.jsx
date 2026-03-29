@@ -1,10 +1,11 @@
 import { useTree } from '../../context/TreeContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
+import { convertToNewick } from '../../utils/newickUtils.js';
 import '../../styles/layout/Sidebar.css';
 
 const SidebarRight = () => {
   const { settings, updateSetting } = useUI();
-  const { state: { treeInstance } } = useTree();
+  const { state: { treeInstance, collapsedNodes, renamedNodes } } = useTree();
 
   const handleExportNewick = () => {
     // 這裡可以呼叫原本的 ExportService
