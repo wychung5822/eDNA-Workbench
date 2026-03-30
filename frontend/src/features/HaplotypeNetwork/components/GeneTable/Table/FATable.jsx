@@ -180,7 +180,6 @@ const FATable = ({
                       }}
                       className="fa-table-checkbox"
                     />
-                    Show selected
                   </label>
                 )}
               </th>

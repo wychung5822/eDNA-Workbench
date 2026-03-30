@@ -5,6 +5,7 @@ import { Canvg } from 'canvg';
 
 import "./styles/HaplotypeNetwork.css";
 
+// Utility function to convert oklch color to rgb
 function oklchToRgb(L, C, H) {
   const x = C * Math.cos(H);
   const y = C * Math.sin(H);
@@ -21,18 +22,18 @@ function oklchToRgb(L, C, H) {
   };
 }
 
-const HaplotypeNetwork = ({ width = 800, height = 800 , genes ,eDnaSampleContent }) => {
+const HaplotypeNetwork = ({ width = 850, height = 850 , genes ,eDnaSampleContent }) => {
   const svgRef = useRef();
   const [data, setData] = useState(null);
   const [cityColors, setCityColors] = useState({});
   const [cityColorMap, setCityColorMap] = useState({});
   const [apiPath, setApiPath] = useState("HaplotypeNetwork");
-  const [scaleFactor, setScaleFactor] = useState(1); // 控制節點與距離的縮放
+  const [scaleFactor, setScaleFactor] = useState(1); 
   const [loading, setLoading] = useState(true);
   const [countRange, setCountRange] = useState({ min: 0, max: 100 });
   const [fetchedRange, setFetchedRange] = useState({ min: 0, max: 100 });
-  
 
+  // Set the API path based on gene information
   useEffect(() => {
     if (genes && genes.length > 0) {
       const geneName = genes[0].name; 
@@ -48,9 +49,10 @@ const HaplotypeNetwork = ({ width = 800, height = 800 , genes ,eDnaSampleContent
     }
   }, [genes]);
 
+  // Fetch haplotype data when parameters change
   useEffect(() => {
     setLoading(true); 
-    setData(null); // Clear previous data
+    setData(null); 
 
     const min = countRange.min;
     const max = countRange.max;
@@ -68,6 +70,7 @@ const HaplotypeNetwork = ({ width = 800, height = 800 , genes ,eDnaSampleContent
 
   }, [apiPath, countRange, genes , eDnaSampleContent]);
 
+  // Fetch the count range data
   useEffect(() => {
     if (apiPath) {
       fetch("http://localhost:3000/api/haplotypes/HaplotypeCountRange")
@@ -82,29 +85,27 @@ const HaplotypeNetwork = ({ width = 800, height = 800 , genes ,eDnaSampleContent
     }
   }, [apiPath , genes , eDnaSampleContent]);
 
-  // Reset chart
+  // Reset chart and re-fetch data
   const resetChart = () => {
     const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove();  // Clear SVG content
+    svg.selectAll("*").remove();  
 
     setLoading(true); 
-    setData(null); // Clear previous data
+    setData(null); 
 
-    // Re-fetch the data from the API
     fetch(`http://localhost:3000/api/haplotypes/${apiPath}?min=${countRange.min}&max=${countRange.max}`)
       .then((res) => res.json())
       .then((newData) => {
-        setData(newData); // Update the state with the new data
-        setLoading(false); // Set loading to false when data is fetched
+        setData(newData); 
+        setLoading(false); 
       })
       .catch(() => {
         setData({ error: true });
-        setLoading(false); // Set loading to false in case of an error
+        setLoading(false); 
       });
   };
 
-
-  // 初始化圖表
+  // Chart initialization
   useEffect(() => {
     if (!data?.nodes || !data?.edges) return;
 
@@ -125,7 +126,6 @@ const HaplotypeNetwork = ({ width = 800, height = 800 , genes ,eDnaSampleContent
     });
     const cityList = Array.from(allCities);
 
-    // Use custom color generation
     const usedColors = new Set();
     const cityColorScale = d3
       .scaleOrdinal()
@@ -150,7 +150,6 @@ const HaplotypeNetwork = ({ width = 800, height = 800 , genes ,eDnaSampleContent
     cityList.forEach((city) => (cityColorMap[city] = cityColorScale(city)));
     setCityColors(cityColorMap);
 
-    // Group colors and node radii
     const groupIds = Array.from(new Set(validNodes.map((d) => d.groupId)));
     const groupColorScale = d3
       .scaleOrdinal(d3.schemeTableau10)
@@ -161,13 +160,11 @@ const HaplotypeNetwork = ({ width = 800, height = 800 , genes ,eDnaSampleContent
       .domain([1, maxCount || 1])
       .range([10 * scaleFactor, 30 * scaleFactor]);
 
-    // Random initial positions
     data.nodes.forEach((d) => {
       d.x = Math.random() * width;
       d.y = Math.random() * height;
     });
 
-    // Force simulation
     const sim = d3
       .forceSimulation(data.nodes)
       .force(
@@ -189,7 +186,6 @@ const HaplotypeNetwork = ({ width = 800, height = 800 , genes ,eDnaSampleContent
         d3.forceCollide().radius((d) => r(d.count) + 2 * scaleFactor)
       );
 
-    // Draw links and distance labels
     const linkGroup = g.append("g").attr("class", "links");
     linkGroup
       .selectAll("line")
@@ -209,7 +205,6 @@ const HaplotypeNetwork = ({ width = 800, height = 800 , genes ,eDnaSampleContent
       .attr("fill", "var(--primary)")
       .attr("text-anchor", "middle");
 
-    // Node groups
     const node = g
       .append("g")
       .selectAll("g")
@@ -233,7 +228,6 @@ const HaplotypeNetwork = ({ width = 800, height = 800 , genes ,eDnaSampleContent
           })
       );
 
-    // Draw pie chart slices and add tooltips to them
     const pie = d3.pie().value(([_, value]) => value);
     const arc = d3.arc();
 
@@ -267,14 +261,12 @@ const HaplotypeNetwork = ({ width = 800, height = 800 , genes ,eDnaSampleContent
         .attr("stroke", "var(--primary)")
         .attr("stroke-width", borderWidth);
 
-      // Add tooltips for pie chart slices
       slice.append("title").text(
         (arcData) =>
           `City: ${arcData.data[0]}\nCount: ${arcData.data[1]}`
       );
     });
 
-    // Add tooltips and labels for nodes (outside the pie chart)
     node
       .append("title")
       .text(
@@ -293,9 +285,8 @@ const HaplotypeNetwork = ({ width = 800, height = 800 , genes ,eDnaSampleContent
       .attr("stroke", "var(--text)")
       .attr("stroke-width", 0.5)
       .attr("font-size", 12)
-      .style("pointer-events", "none"); // Avoid text blocking click events
+      .style("pointer-events", "none"); 
 
-    // Tick updates node and link positions
     sim.on("tick", () => {
       g.selectAll("line")
         .attr("x1", (d) => d.source.x)
@@ -308,22 +299,27 @@ const HaplotypeNetwork = ({ width = 800, height = 800 , genes ,eDnaSampleContent
         .attr("y", (d) => (d.source.y + d.target.y) / 2);
 
       node.attr("transform", (d) => {
-        d.x = Math.max(r(d.count), Math.min(width - r(d.count), d.x));
-        d.y = Math.max(r(d.count), Math.min(height - r(d.count), d.y));
+        const margin = 25;
+        const validWidth = width - margin * 2;
+        const validHeight = height - margin * 2;
+
+        d.x = Math.max(r(d.count) + margin, Math.min(validWidth - r(d.count), d.x));
+        d.y = Math.max(r(d.count) + margin, Math.min(validHeight - r(d.count), d.y));
 
         return `translate(${d.x},${d.y})`;
       });
     });
   }, [data, width, height, scaleFactor, cityColorMap, genes]);
 
-  // 手動縮放控制
+  // Handle zoom in/out buttons
   const handleResize = (dir) => {
     setScaleFactor((prev) => {
       const next = dir === "in" ? prev * 1.2 : prev * 0.8;
-      return Math.max(0.2, Math.min(5, next)); // 限制縮放範圍
+      return Math.max(0.2, Math.min(5, next)); 
     });
   };
 
+  // Handle min and max count changes
   const handleMinChange = (e) => {
     const value = +e.target.value;
     if (value >= 0 && value <= fetchedRange.max) {
@@ -344,6 +340,7 @@ const HaplotypeNetwork = ({ width = 800, height = 800 , genes ,eDnaSampleContent
     }
   };
 
+  // Export chart to PNG
   const exportPNG = async () => {
     const svgContainer = svgRef.current;
     const legendContainer = document.querySelector(".HaplotypeNetwork-svg-container");
@@ -384,11 +381,12 @@ const HaplotypeNetwork = ({ width = 800, height = 800 , genes ,eDnaSampleContent
       const legendWidth = 180 * numCols + padding;
       const legendHeight = padding * 2 + numRows * (fontSize + spacing);
 
-      canvas.width = Math.max(svgContainer.width.baseVal.value, legendWidth) + legendWidth ;
+      const marginRight = 50;
+      canvas.width = svgContainer.width.baseVal.value + legendWidth;
       canvas.height = svgContainer.height.baseVal.value;
 
       ctx.fillStyle = "white";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, canvas.width , canvas.height);
 
       ctx.drawImage(legendCanvas, 0, 0);
 
@@ -398,7 +396,7 @@ const HaplotypeNetwork = ({ width = 800, height = 800 , genes ,eDnaSampleContent
       legendItems.forEach((item, i) => {
         const col = Math.floor(i / itemsPerColumn);
         const row = i % itemsPerColumn;
-        const x = svgContainer.width.baseVal.value + col * 180 + padding;
+        const x = svgContainer.width.baseVal.value + col * 180 + padding ;
         const y = padding + row * (fontSize + spacing) + fontSize / 2;
 
         ctx.fillStyle = item.color;
@@ -418,6 +416,10 @@ const HaplotypeNetwork = ({ width = 800, height = 800 , genes ,eDnaSampleContent
     }
   };
 
+
+
+
+  // Configuration and consistency checks
   const [isConfigured, setIsConfigured] = useState(false); 
   const [isLengthConsistent, setIsLengthConsistent] = useState(true); 
 
@@ -505,7 +507,7 @@ const HaplotypeNetwork = ({ width = 800, height = 800 , genes ,eDnaSampleContent
           </button>
         </div>    
 
-        {/* 顯示基因序列長度不一致的提示 */}
+        {/* Display gene sequence length inconsistency warning */}
         {!isLengthConsistent && (
           <div className="HaplotypeNetwork-warning-box">
             <p>⚠️ The gene sequence lengths are different! Please check your data.</p>

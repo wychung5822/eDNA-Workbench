@@ -200,7 +200,7 @@ const HaplotypeNetworkApp = ({
     prevInitialFileContent.current = initialFileContent; 
 
   }, [initialFileContent]); 
-  
+
   // =======================
   // Render
   // =======================
@@ -210,7 +210,7 @@ const HaplotypeNetworkApp = ({
       {portalTarget && createPortal(
         <div className="button-group nav">
           <button onClick={() => { setActiveSection("taiwanMap"); setIsLocationMapVisible(true); }}>
-            ASVs Distribution Map
+            ASV Distribution Map
           </button>
           <button onClick={() => setActiveSection("haplotypeNetwork")}>
             Haplotype Network
@@ -254,7 +254,7 @@ const HaplotypeNetworkApp = ({
                 <div className="button-group app">
                   <button onClick={() => setActiveSection("taiwanMap_total")}>By Location</button>
                   <button onClick={() => setActiveSection("taiwanMap_count")}>By Sequence</button>
-                  <button onClick={() => setActiveSection("geneComponents")}>Compare Components</button>
+                  <button onClick={() => setActiveSection("geneComponents")}>By Similarity</button>
                 </div>
             )}
 

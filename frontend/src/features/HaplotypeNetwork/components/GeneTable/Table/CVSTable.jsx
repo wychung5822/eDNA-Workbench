@@ -148,21 +148,13 @@ const CVSTable = ({
         />
       </div>
 
-      {/* Filter Mode Buttons */}
-      <div className="CVSTable-filter-buttons">
-        Show on Map:
-        <button
-          onClick={() => handleFilterModeChange("all")}
-          className={`CVSTable-button ${Mode === "all" ? "active" : ""}`}
-        >
-          Show all
-        </button>
-        <button
-          onClick={() => handleFilterModeChange("range")}
-          className={`CVSTable-button ${Mode === "range" ? "active" : ""}`}
-        >
-          Show {minPercentage} % ~ {maxPercentage} %
-        </button>
+      {/* Toggle Percentage Display */}
+      <div className="CVSTable-percentage-toggle">
+        <div className="CVSTable-toggle-button">
+          <button onClick={() => setShowPercentage((prev) => !prev)}>
+            {showPercentage ? "Display Value" : "Display Percentage"}
+          </button>
+        </div>
       </div>
 
       {/* Percentage Range Input */}
@@ -188,12 +180,32 @@ const CVSTable = ({
         %
       </div>
 
-      {/* Toggle Percentage Display */}
-      <div className="CVSTable-percentage-toggle">
-        <div className="CVSTable-toggle-button">
-          <button onClick={() => setShowPercentage((prev) => !prev)}>
-            {showPercentage ? "Display Value" : "Display Percentage"}
-          </button>
+      {/* Filter Mode Buttons */}
+      <div className="CVSTable-filter-buttons">
+        Show on Map:
+        <button
+          onClick={() => handleFilterModeChange("all")}
+          className={`CVSTable-button ${Mode === "all" ? "active" : ""}`}
+        >
+          all
+        </button>
+        <button
+          onClick={() => handleFilterModeChange("range")}
+          className={`CVSTable-button ${Mode === "range" ? "active" : ""}`}
+        >
+          {minPercentage} % ~ {maxPercentage} %
+        </button>
+      </div>
+
+      <div style={{ marginBottom: "8px", display: "flex", justifyContent: "space-between" }}>         
+        <div className="CVSTable-button-All-Clear">
+          <button onClick={handleSelectAllLocations}>All ASV</button>
+          <button onClick={handleClearAllLocations}>Clear</button>
+        </div>
+
+        <div className="CVSTable-button-All-Clear">
+          <button onClick={handleSelectAllASVs}>All Location</button>
+          <button onClick={handleClearAllASVs}>Clear</button>
         </div>
       </div>
 
@@ -207,19 +219,11 @@ const CVSTable = ({
                   <th key={idx}>
                     {header === "locations" ? (
                       <>
-                        locations
-                        <div className="CVSTable-button-All-Clear">
-                          <button onClick={handleSelectAllLocations}>All</button>
-                          <button onClick={handleClearAllLocations}>Clear</button>
-                        </div>
+                        locations                       
                       </>
                     ) : header === "ASV_total" ? (
                       <>
                        total
-                        <div className="CVSTable-button-All-Clear">
-                          <button onClick={handleSelectAllASVs}>All </button>
-                          <button onClick={handleClearAllASVs}>Clear</button>
-                        </div>
                       </>
                     ) : header.startsWith("ASV_") ? (
                       <span className="CVSTable-header-hap">

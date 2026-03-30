@@ -65,10 +65,11 @@
 /* SVG Container */
 .HaplotypeNetwork-svg-container {
   display: flex;
+  z-index: 1000;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  border-radius: 10px;
+  width: 850px;
+  height: 850px;
   background-color: var(--bg-page);
   border: 1px solid var(--primary);
 }

@@ -167,10 +167,10 @@ const GeneList = ({
         {/* 切換按鈕區 */}
         <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
           <button onClick={() => setShowGenes(true)} className="GeneList-button-Select">
-            Select display ASV
+            Display selected ASV
           </button>
           <button onClick={() => setShowGenes(false)} className="GeneList-button-Select">
-            Select display City
+            Display selected Locations
           </button>
         </div>
 

@@ -267,11 +267,7 @@ export const useGeneTableEffects = ({
     onFormattedGenesChange, // 監聽 onFormattedGenesChange
   ]);
     useEffect(() => {
-}, [filterMode]);  
-
-
- 
-
+    }, [filterMode]);  
 
   // 7️⃣ eDNA Mapping
   useEffect(() => {
