@@ -51,7 +51,7 @@ export class DockerService {
     }
   }
 
-  // pull Docker image if it doesn't exist
+  // pull Docker image if it doesn't exist (blocking, no progress)
   async pullImageIfNeeded(imageName = this.fullImageName) {
     try {
       const exists = await this.checkImageExists(imageName);
@@ -68,6 +68,53 @@ export class DockerService {
       logger.error(`Failed to pull image ${imageName}:`, error.message);
       return false;
     }
+  }
+
+  /**
+   * Pull Docker image with real-time progress via callbacks
+   * @param {Function} onProgress - called with { status, progress, layer } on each chunk
+   * @param {string} imageName
+   * @returns {Promise<boolean>}
+   */
+  pullImageWithProgress(onProgress, imageName = this.fullImageName) {
+    return new Promise((resolve, reject) => {
+      logger.info(`Pulling image with progress: ${imageName}`);
+      const pullProcess = spawn("docker", ["pull", imageName]);
+
+      pullProcess.stdout.on("data", (data) => {
+        const lines = data.toString().split("\n").filter(Boolean);
+        lines.forEach((line) => {
+          if (onProgress) onProgress({ type: "progress", message: line });
+        });
+      });
+
+      pullProcess.stderr.on("data", (data) => {
+        const lines = data.toString().split("\n").filter(Boolean);
+        lines.forEach((line) => {
+          if (onProgress) onProgress({ type: "progress", message: line });
+        });
+      });
+
+      pullProcess.on("close", (code) => {
+        if (code === 0) {
+          logger.info(`Successfully pulled image ${imageName}`);
+          if (onProgress)
+            onProgress({ type: "done", message: "Image pull complete" });
+          resolve(true);
+        } else {
+          const err = `docker pull exited with code ${code}`;
+          logger.error(err);
+          if (onProgress) onProgress({ type: "error", message: err });
+          resolve(false);
+        }
+      });
+
+      pullProcess.on("error", (error) => {
+        logger.error("docker pull process error:", error);
+        if (onProgress) onProgress({ type: "error", message: error.message });
+        reject(error);
+      });
+    });
   }
 
   /**
@@ -189,13 +236,13 @@ export class DockerService {
         };
       }
 
-      // -- Check/Pull image
-      checks.imageAvailable = await this.pullImageIfNeeded();
+      // -- Check image (do NOT pull here; pull is triggered separately via /docker/pull)
+      checks.imageAvailable = await this.checkImageExists();
       if (!checks.imageAvailable) {
         return {
           success: false,
           checks,
-          message: `Failed to get image ${this.fullImageName}`,
+          message: `Image ${this.fullImageName} not found. Please pull the image first.`,
         };
       }
 

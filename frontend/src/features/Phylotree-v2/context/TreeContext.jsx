@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useReducer 
 const TreeContext = createContext();
 
 const initialState = {
-  // newick: "((A:0.1,B:0.2):0.1,(C:0.3,D:0.4):0.5)", // User provided testing tree
+  newick: "",
   treeInstance: null,
   collapsedNodes: new Set(),
   renamedNodes: new Map(),
@@ -24,6 +24,12 @@ const treeReducer = (state, action) => {
   switch (action.type) {
     case 'SET_NEWICK':
       return { ...state, newick: action.payload, loading: true };
+    case 'LOAD_NEW_FILE':
+      return {
+        ...initialState,
+        newick: action.payload,
+        loading: true,
+      };
     case 'PARSE_SUCCESS':
       return { ...state, treeInstance: action.payload, loading: false, error: null };
     case 'PARSE_ERROR':
@@ -36,7 +42,11 @@ const treeReducer = (state, action) => {
     }
     case 'RENAME_NODE': {
       const newMap = new Map(state.renamedNodes);
-      newMap.set(action.payload.id, action.payload.name);
+      if (action.payload.name.trim() === "") {
+        newMap.delete(action.payload.id);
+      } else {
+        newMap.set(action.payload.id, action.payload.name);
+      }
       return { ...state, renamedNodes: newMap };
     }
     case 'MERGE_NODES': {
@@ -79,7 +89,8 @@ export const TreeProvider = ({ children }) => {
 
   // Wrap actions in useCallback to stable references
   const loadNewick = useCallback((newickStr) => dispatch({ type: 'SET_NEWICK', payload: newickStr }), []);
-  const toggleCollapse = useCallback((nodeId) => dispatch({ type: 'TOGGLE_COLLAPSE', payload: nodeId }), []);
+  const loadNewFile = useCallback((newickStr) => dispatch({ type: 'LOAD_NEW_FILE', payload: newickStr }), []);
+  const toggleCollapse = useCallback((nodeId) => dispatch({ type: 'TOGGLE_COLLAPSE', payload: nodeId }), []);;
   const renameNode = useCallback((id, name) => dispatch({ type: 'RENAME_NODE', payload: { id, name } }), []);
   
   const openContextMenu = useCallback((event, nodeId, nodeData, isNodeCollapsed) => {
@@ -104,13 +115,14 @@ export const TreeProvider = ({ children }) => {
     state,
     dispatch,
     loadNewick,
+    loadNewFile,
     toggleCollapse,
     renameNode,
     openContextMenu,
     closeContextMenu,
     setMergedNode,
     unmergeNode
-  }), [state, loadNewick, toggleCollapse, renameNode, openContextMenu, closeContextMenu, setMergedNode, unmergeNode]);
+  }), [state, loadNewick, loadNewFile, toggleCollapse, renameNode, openContextMenu, closeContextMenu, setMergedNode, unmergeNode]);
 
   return (
     <TreeContext.Provider value={contextValue}>

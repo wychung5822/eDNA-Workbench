@@ -20,7 +20,7 @@ export function FileProvider({ children }) {
 
   // Handle Newick
   const handlePhylotreeFileChange = (event) => {
-    const file = event.target.files[0];
+    const file = event.target.files[0]; 
     if (!file) return;
 
     setPhylotreeFileName(file.name);

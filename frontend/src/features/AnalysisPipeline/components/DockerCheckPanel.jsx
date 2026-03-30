@@ -1,5 +1,5 @@
 // src/components/DockerCheckPanel.jsx
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api } from '../services/api'
 import '../styles/components/DockerCheckPanel.css'
 
@@ -8,60 +8,108 @@ const DockerCheckPanel = ({ onDockerReady }) => {
     const [dockerStatus, setDockerStatus] = useState(null)
     const [showInstructions, setShowInstructions] = useState(false)
 
+    // Pull progress state
+    const [pulling, setPulling] = useState(false)
+    const [pullLogs, setPullLogs] = useState([])
+    const [pullError, setPullError] = useState(null)
+    const pullEsRef = useRef(null)
+    const logsEndRef = useRef(null)
+
+    // Auto-scroll pull log to bottom
     useEffect(() => {
-      const initialCheck = async () => {
-        setChecking(true);
+        logsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, [pullLogs])
+
+    // Cleanup SSE on unmount
+    useEffect(() => {
+        return () => { pullEsRef.current?.close() }
+    }, [])
+
+    const doCheck = async () => {
+        setChecking(true)
         try {
-          const response = await api.docker.checkEnvironment();
-          setDockerStatus(response.data);
+            const response = await api.docker.checkEnvironment()
+            setDockerStatus(response.data)
+            return response.data
         } catch (error) {
-          setDockerStatus({
-            success: false,
-            checks: {
-              dockerInstalled: false,
-              dockerRunning: false,
-              imageAvailable: false
-            },
-            message: error.response?.data?.message || 'Failed to check Docker environment'
-          });
+            const status = {
+                success: false,
+                checks: {
+                    dockerInstalled: false,
+                    dockerRunning: false,
+                    imageAvailable: false
+                },
+                message: error.response?.data?.message || 'Failed to check Docker environment'
+            }
+            setDockerStatus(status)
+            return status
         } finally {
-          setChecking(false);
+            setChecking(false)
         }
-      };
-      initialCheck();
+    }
+
+    const startPullRef = useRef(null)
+
+    const startPull = () => {
+        setPulling(true)
+        setPullLogs([])
+        setPullError(null)
+
+        pullEsRef.current = api.docker.pullImage({
+            onProgress: (msg) => {
+                setPullLogs((prev) => [...prev, msg])
+            },
+            onDone: async () => {
+                setPulling(false)
+                // Re-check after pull completes
+                await doCheck()
+            },
+            onError: (msg) => {
+                setPulling(false)
+                setPullError(msg)
+            }
+        })
+    }
+    startPullRef.current = startPull
+
+    useEffect(() => {
+        const initialCheck = async () => {
+            const status = await doCheck()
+            // If Docker is running but image is missing, auto-start pull
+            if (
+                status.checks?.dockerInstalled &&
+                status.checks?.dockerRunning &&
+                !status.checks?.imageAvailable
+            ) {
+                startPullRef.current()
+            }
+        }
+        initialCheck()
     }, [])
 
     const handleRecheck = async () => {
-      setChecking(true);
-
-      if (dockerStatus?.checks?.dockerInstalled === false) {
-        try {
-          await window.electronAPI.reinitializeBackend();
-        } catch (error) {
-          console.error('Backend reinitialization failed:', error);
+        if (dockerStatus?.checks?.dockerInstalled === false) {
+            try {
+                await window.electronAPI.reinitializeBackend()
+            } catch (error) {
+                console.error('Backend reinitialization failed:', error)
+            }
         }
-      }
 
-      try {
-        console.log("Performing a new environment check...");
-        const response = await api.docker.checkEnvironment();
-        setDockerStatus(response.data);
-        if (response.data.success) {
-            setShowInstructions(false);
+        const status = await doCheck()
+        if (status.success) {
+            setShowInstructions(false)
         }
-      } catch (error) {
-        setDockerStatus({
-            success: false,
-            checks: { 
-              dockerInstalled: false,
-              dockerRunning: false,
-              imageAvailable: false
-            },
-            message: error.response?.data?.message || 'Failed to check Docker environment'
-        });
-      } finally {
-        setChecking(false);
-      }
+
+        // If image still missing after manual recheck, restart pull
+        if (
+            status.checks?.dockerInstalled &&
+            status.checks?.dockerRunning &&
+            !status.checks?.imageAvailable &&
+            !pulling
+        ) {
+            startPull()
+        }
     }
 
     const getStatusText = (status) => {
@@ -75,6 +123,40 @@ const DockerCheckPanel = ({ onDockerReady }) => {
             onDockerReady()
         }
     }
+
+    const renderPullProgress = () => (
+        <div className="instructions-content">
+            <h3>
+                {pulling ? 'Downloading Docker Image...' : pullError ? 'Download Failed' : 'Download Complete'}
+            </h3>
+            <p className="note">
+                Note: First-time setup requires downloading approximately 1–2 GB of data.
+                Please ensure a stable internet connection.
+            </p>
+
+            <div className="pull-log-box">
+                {pullLogs.map((line, i) => (
+                    <div key={i} className="pull-log-line">{line}</div>
+                ))}
+                {pulling && <div className="pull-log-line pull-log-cursor">▌</div>}
+                <div ref={logsEndRef} />
+            </div>
+
+            {pullError && (
+                <p className="pull-error">
+                    ✗ {pullError}
+                </p>
+            )}
+
+            {!pulling && pullError && (
+                <div className="button-container" style={{ marginTop: '1rem' }}>
+                    <button className="instruction-toggle" onClick={startPull}>
+                        Retry Download
+                    </button>
+                </div>
+            )}
+        </div>
+    )
 
     const renderInstructions = () => {
         const { checks } = dockerStatus
@@ -140,13 +222,7 @@ const DockerCheckPanel = ({ onDockerReady }) => {
         }
 
         if (!checks.imageAvailable) {
-            return (
-                <div className="instructions-content">
-                    <h3>Downloading Docker Image</h3>
-                    <p>The system is downloading the required Docker image. This may take a few minutes...</p>
-                    <p className="note">Note: First-time setup requires downloading approximately 1-2 GB of data. Please ensure a stable internet connection.</p>
-                </div>
-            )
+            return renderPullProgress()
         }
 
         return null
@@ -181,28 +257,36 @@ const DockerCheckPanel = ({ onDockerReady }) => {
                                 <span className="status-value">{getStatusText(dockerStatus?.checks.dockerRunning)}</span>
                             </div>
 
-                            <div className={`status-item ${dockerStatus?.checks.imageAvailable ? 'success' : 'warning'}`}>
+                            <div className={`status-item ${dockerStatus?.checks.imageAvailable ? 'success' : pulling ? 'warning' : 'warning'}`}>
                                 <span className="status-label">Analysis Image</span>
-                                <span className="status-value">{getStatusText(dockerStatus?.checks.imageAvailable)}</span>
+                                <span className="status-value">
+                                    {pulling ? 'Downloading...' : getStatusText(dockerStatus?.checks.imageAvailable)}
+                                </span>
                             </div>
                         </div>
 
-                        {!dockerStatus?.success && (
-                            <div className="button-container">
-                                <button
-                                    className="instruction-toggle"
-                                    onClick={() => setShowInstructions(!showInstructions)}
-                                >
-                                    {showInstructions ? 'Hide Instructions' : 'Show Installation Guide'}
-                                </button>
-                            </div>
-                        )}
-
-                        {showInstructions && (
+                        {/* Show pull progress inline when pulling */}
+                        {pulling || (pullLogs.length > 0) || pullError ? (
                             <div className="instructions-panel">
-                              {renderInstructions()}
+                                {renderPullProgress()}
                             </div>
-                        )}
+                        ) : !dockerStatus?.success ? (
+                            <>
+                                <div className="button-container">
+                                    <button
+                                        className="instruction-toggle"
+                                        onClick={() => setShowInstructions(!showInstructions)}
+                                    >
+                                        {showInstructions ? 'Hide Instructions' : 'Show Installation Guide'}
+                                    </button>
+                                </div>
+                                {showInstructions && (
+                                    <div className="instructions-panel">
+                                        {renderInstructions()}
+                                    </div>
+                                )}
+                            </>
+                        ) : null}
                     </>
                 )}
             </div>
@@ -211,7 +295,7 @@ const DockerCheckPanel = ({ onDockerReady }) => {
                 <button
                     className="recheck-button"
                     onClick={handleRecheck}
-                    disabled={checking}
+                    disabled={checking || pulling}
                 >
                     {checking ? 'Checking...' : 'Recheck'}
                 </button>
@@ -219,7 +303,7 @@ const DockerCheckPanel = ({ onDockerReady }) => {
                 <button
                     className="next-button"
                     onClick={handleNext}
-                    disabled={!dockerStatus?.success || checking} 
+                    disabled={!dockerStatus?.success || checking || pulling}
                 >
                     Next
                 </button>

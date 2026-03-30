@@ -21,6 +21,63 @@ router.get("/check", async (req, res) => {
   }
 });
 
+/**
+ * POST /api/docker/pull
+ * SSE endpoint — streams docker pull progress to the client.
+ * The client connects and receives event-stream lines until done/error.
+ */
+router.get("/pull", async (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no"); // disable nginx/proxy buffering
+  res.flushHeaders();
+
+  const send = (data) => {
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+    // flush() is added by the compression middleware to bypass gzip buffering
+    if (typeof res.flush === "function") res.flush();
+  };
+
+  try {
+    // First make sure Docker is running before we try to pull
+    const installed = await dockerService.checkDockerAvailable();
+    if (!installed) {
+      send({ type: "error", message: "Docker is not installed" });
+      res.end();
+      return;
+    }
+    const running = await dockerService.checkDockerRunning();
+    if (!running) {
+      send({ type: "error", message: "Docker daemon is not running" });
+      res.end();
+      return;
+    }
+
+    // Already have the image?
+    const exists = await dockerService.checkImageExists();
+    if (exists) {
+      send({ type: "done", message: "Image already exists" });
+      res.end();
+      return;
+    }
+
+    send({ type: "start", message: "Starting image download..." });
+
+    const success = await dockerService.pullImageWithProgress((event) => {
+      send(event);
+    });
+
+    if (!success) {
+      send({ type: "error", message: "Image pull failed" });
+    }
+  } catch (error) {
+    send({ type: "error", message: error.message });
+  } finally {
+    res.end();
+  }
+});
+
 router.get("/installed", async (req, res) => {
   try {
     const installed = await dockerService.checkDockerAvailable();
