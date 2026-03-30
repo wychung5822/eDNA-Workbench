@@ -45,6 +45,7 @@ const HaplotypeNetworkApp = ({
   const [cityVisibility, setCityVisibility] = useState([]);
 
   const [mapSettings, setMapSettings] = useState({ imgW: 465, imgH: 658.5, lonRange: [120, 122], latRange: [21.5, 25.5], });
+  const [selectedMap, setSelectedMap] = useState(null); 
 
   // =======================
   // Refs & Constants
@@ -240,6 +241,8 @@ const HaplotypeNetworkApp = ({
               onCityVisibilityChange={setCityVisibility}
               cityUpdateFlags={cityUpdateFlags}
               onMapSettingsChange={setMapSettings}
+              selectedMap={selectedMap} 
+              setSelectedMap={setSelectedMap} 
             />
           </div>
 
@@ -317,6 +320,8 @@ const HaplotypeNetworkApp = ({
                 onMapSettingsChange={setMapSettings}
                 isReduced={isReduced} 
                 setIsReduced={setIsReduced}
+                selectedMap={selectedMap} 
+                setSelectedMap={setSelectedMap} 
               />
             </div>
 
@@ -331,7 +336,7 @@ const HaplotypeNetworkApp = ({
                 <div className="button-group app">
                   <button onClick={() => setActiveSection("taiwanMap_total")}>By Location</button>
                   <button onClick={() => setActiveSection("taiwanMap_count")}>By Sequence</button>
-                  <button onClick={() => setActiveSection("geneComponents")}>Compare Components</button>
+                  <button onClick={() => setActiveSection("geneComponents")}>By Similarity</button>
                 </div>
             )}
 

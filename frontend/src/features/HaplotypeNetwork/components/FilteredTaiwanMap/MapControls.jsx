@@ -1,3 +1,4 @@
+import { useEffect} from "react";
 import { mapImages } from "../../data/mapImages.js";
 import "../styles/TaiwanMapComponent.css";
 
@@ -10,11 +11,11 @@ const MapControls = ({
   setLonDirMin, setLonDirMax, setLatDirMin, setLatDirMax,
   activeMapId, setActiveMapId,
   setMapImage,
+  selectedMap, setSelectedMap,
   handleImageUpload,
   handleSwitchMap
 }) => {
   const resetMapSettings = () => {
-    // 重置圖片尺寸和經緯度設置
     setImgW('');
     setImgH('');
     setLonRange([0, 0]);
@@ -25,28 +26,38 @@ const MapControls = ({
     setLatDirMax('S');
   };
 
+  useEffect(() => {
+    if (selectedMap) {    
+      handleSwitchMap(selectedMap); 
+    } else {
+      resetMapSettings();
+    }
+  }, [selectedMap, handleSwitchMap]);
+
   return (
     <div className="map-settings-container">
       {/* 📁 上傳 & 地圖清單 */}
       <div className="map-upload-column">
         <div className="map-select-container">
-          <label >Select Map Image: 
-            <select
+          <label>Select Map Image: 
+           <select
               value={activeMapId ?? ""}
               onChange={(e) => {
                 const value = e.target.value;
                 if (value === "") {
-                  // 選擇空白
                   setActiveMapId("");
                   setMapImage(null);
-                  resetMapSettings();  // 清空設定
+                  resetMapSettings();  
                 } else if (value === "Customize") {
                   setActiveMapId("Customize");
                   setMapImage(null);
-                  resetMapSettings();  // 清空設定
+                  resetMapSettings();  
                 } else {
                   const map = mapImages.find((m) => m.id === value);
-                  if (map) handleSwitchMap(map);
+                  if (map) {
+                    setSelectedMap(map);  
+                    handleSwitchMap(map);
+                  }
                 }
               }}
             >
@@ -56,27 +67,27 @@ const MapControls = ({
                   {map.name}
                 </option>
               ))}
-              <option value="Customize">Customize-Map</option>
+              <option value="Customize">Custom-Map</option>
             </select>
           </label>
         </div>
 
-         <div className="map-upload-container" style={{ whiteSpace: "nowrap" }}>
-            <label>Upload Map Image (.png):</label>
-            <input
-              id="mapImageFile"
-              type="file"
-              accept="image/png"
-              style={{ display: "none" }}
-              onChange={handleImageUpload}
-            />
-            <label htmlFor="mapImageFile" className="map-file-label">
-              Choose File
-            </label>
-          </div>
+        <div className="map-upload-container" style={{ whiteSpace: "nowrap" }}>
+          <label>Upload Map Image (.png):</label>
+          <input
+            id="mapImageFile"
+            type="file"
+            accept="image/png"
+            style={{ display: "none" }}
+            onChange={handleImageUpload}
+          />
+          <label htmlFor="mapImageFile" className="map-file-label">
+            Choose File
+          </label>          
+        </div>
 
         {/* 提醒框 
-        {(activeMapId === "" )&& (
+        {(activeMapId === "" ) && (
           <div className="warning-box">
             <strong>⚠️ Please select or upload a Map Image.</strong>
           </div>
@@ -86,7 +97,7 @@ const MapControls = ({
 
       {/* 🖼️ 圖片尺寸設定 */}
       <div className="map-image-settings-column">
-        {(activeMapId && activeMapId !== "")  && (
+        {(activeMapId && activeMapId !== "") && (
           <>
             <div className="size-settings">
               <label style={{ whiteSpace: "nowrap" }}>Image Width: </label>
@@ -177,7 +188,6 @@ const MapControls = ({
                     setLatDirMin(e.target.value);
                     setLatRange([Math.abs(latRange[0]) * (e.target.value === "N" ? 1 : -1), latRange[1]]);
                   }}
-                  
                 >
                   <option value="N">N</option>
                   <option value="S">S</option>

@@ -51,7 +51,15 @@ const GeneTableContent = ({
         Array.isArray(genes) &&
         genes.length > 0 &&
         Array.isArray(locations) &&
-        locations.length > 0) ||
+        locations.length > 0)  ||
+
+        (viewMode === "total" &&
+        Array.isArray(displayedHeaders) &&
+        displayedHeaders.length > 0 &&
+        Array.isArray(locations) &&
+        locations.length > 0)
+
+        {/*
       (viewMode === "formatted" && Array.isArray(locations) && locations.length > 0) ||
       (viewMode === "detail" &&
         (Array.isArray(genes) && genes.length === 0 || Array.isArray(genes) && genes.length > 0) &&
@@ -60,67 +68,70 @@ const GeneTableContent = ({
         typeof tagMapping === "object" &&
         tagMapping !== null &&
         Object.keys(tagMapping).length > 0) ||
-      (viewMode === "total" &&
-        Array.isArray(displayedHeaders) &&
-        displayedHeaders.length > 0 &&
-        Array.isArray(locations) &&
-        locations.length > 0);
+        */};
+          
 
     setIsConfigured(isAllConfigured);
   }, [genes, locations, tagMapping, ednaMapping, displayedHeaders, viewMode]);
 
-  const renderUploadWarning = () => (
-    <div className="GeneTable-warning-box">
-      <p>⚠️ Complete the following settings：</p>
-      <ul>
-        {viewMode === "" && !viewMode && <li> Select Summary_table or FA_table</li>}
-        {viewMode === "count" && (
-          <>
-            {(!genes || !Array.isArray(genes) || genes.length === 0) && <li> Upload Fa File</li>}
-            {(!locations || !Array.isArray(locations) || locations.length === 0) && (
-              <li> Upload eDNA Sample Station (xlsx)</li>
-            )}
-          </>
-        )}
-        {viewMode === "formatted" && (
-          <>
-            {(!genes || !Array.isArray(genes) || genes.length === 0) && <li> Upload Fa File</li>}
-            {(!locations || !Array.isArray(locations) || locations.length === 0) && (
-              <li> Upload eDNA Sample Station (xlsx)</li>
-            )}
-          </>
-        )}
-        {/* {viewMode === "detail" && (
-          <>
-            {(!paginatedGenes || !Array.isArray(paginatedGenes) || paginatedGenes.length === 0) && (
-              <li> Upload Fa File</li>
-            )}
-            {(!locations || !Array.isArray(locations) || locations.length === 0) && (
-              <li> Upload eDNA Sample Station (xlsx)</li>
-            )}
-            {(!tagMapping || (typeof tagMapping === "object" && Object.keys(tagMapping).length === 0)) && (
-              <li> Upload eDNA_tags (xlsx, cvs)</li>
-            )}
-          </>
-        )} */}
-        {viewMode === "total" && (
-          <>
-            {(!displayedHeaders || !Array.isArray(displayedHeaders) || displayedHeaders.length === 0) && (
-              <li> Upload Cvs File</li>
-            )}
-            {(!locations || !Array.isArray(locations) || locations.length === 0) && (
-              <li> Upload eDNA Sample Station (xlsx)</li>
-            )}
-          </>
-        )}
-      </ul>
-    </div>
-  );
 
-  // If the configuration is not completed, show the warning
+  
+const renderUploadWarning = () => {
+  return (
+    <>
+      {viewMode === "count" && (
+        <div className="GeneTable-warning-box">
+          <p>⚠️ Complete the following settings：</p>
+          <ul>
+            {(!genes || !Array.isArray(genes) || genes.length === 0) && <li>Upload Fa File</li>}
+            {(!locations || !Array.isArray(locations) || locations.length === 0) && (
+              <li>Upload eDNA Sample Station (xlsx)</li>
+            )}
+          </ul>
+        </div>
+      )}
+      {/* 
+      {viewMode === "formatted" && (
+        <>
+          {(!genes || !Array.isArray(genes) || genes.length === 0) && <li> Upload Fa File</li>}
+          {(!locations || !Array.isArray(locations) || locations.length === 0) && (
+            <li> Upload eDNA Sample Station (xlsx)</li>
+          )}
+        </>
+      )}
+      {viewMode === "detail" && (
+        <>
+          {(!paginatedGenes || !Array.isArray(paginatedGenes) || paginatedGenes.length === 0) && (
+            <li> Upload Fa File</li>
+          )}
+          {(!locations || !Array.isArray(locations) || locations.length === 0) && (
+            <li> Upload eDNA Sample Station (xlsx)</li>
+          )}
+          {(!tagMapping || (typeof tagMapping === "object" && Object.keys(tagMapping).length === 0)) && (
+            <li> Upload eDNA_tags (xlsx, cvs)</li>
+          )}
+        </>
+      )}
+      {viewMode === "total" && (
+        <>
+          {(!displayedHeaders || !Array.isArray(displayedHeaders) || displayedHeaders.length === 0) && (
+            <li> Upload Cvs File</li>
+          )}
+          {(!locations || !Array.isArray(locations) || locations.length === 0) && (
+            <li> Upload eDNA Sample Station (xlsx)</li>
+          )}
+        </>
+      )}
+      */}
+      
+    </>
+  );
+};
+
   if (!isConfigured) {
     return renderUploadWarning();
   }
+  
 
   const handleFATableSelectionChange = (newSelectedGenes) => {
     setSelectedGene_FATable(newSelectedGenes);

@@ -20,11 +20,12 @@ const TaiwanMapComponent = ({
   onSelectedGenesChange,
   cityVisibility = {},
   onCityVisibilityChange,
-  onMapSettingsChange
+  onMapSettingsChange,
+  selectedMap,
+  setSelectedMap,
 }) => {
 
-   const [fileName, setFileName] = useState("Map"); // 管理檔名狀態
-   
+  const [fileName, setFileName] = useState("Map"); // 管理檔名狀態
 
   // ===== Map Settings =====
   const {
@@ -124,6 +125,8 @@ const TaiwanMapComponent = ({
         setLatDirMax={setLatDirMax}
         activeMapId={activeMapId}
         setActiveMapId={setActiveMapId}
+        selectedMap={selectedMap} 
+        setSelectedMap={setSelectedMap} 
         setMapImage={setMapImage}
         handleImageUpload={handleImageUpload}
         handleSwitchMap={handleSwitchMap}

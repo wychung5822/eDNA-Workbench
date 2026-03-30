@@ -50,11 +50,10 @@ const MapMainView = ({
         <div className="MapMainView-warning-box">
           <p>⚠️ Complete the following settings：</p>
           <ul>
-            {!mapImage && <li> Select or Upload a MapImage </li>}
-            {!imgW && <li> Enter image Width</li>}
-            {!imgH && <li> Enter image Height</li>}
+            {!mapImage && <li> Select or upload a map image </li>}
+            {!imgW && <li> Enter image Width and Height</li>}
             {(!filteredCityGeneData || Object.keys(filteredCityGeneData).length === 0) && (
-              <li> Enter the values ​​in the FA_table</li>             
+              <li> Select one ASV as the target</li>             
             )}
           </ul>
         </div>

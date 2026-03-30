@@ -26,6 +26,13 @@
   padding-left: 50px;
 }
 
+.GeneTable-warning-box li::before {
+  color: var(--text); 
+  font-size: 20px; 
+  margin-right: 10px; 
+  vertical-align: middle; 
+}
+
 /* ============================ */
 .gene-table {
   width: max-content;

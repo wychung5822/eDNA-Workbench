@@ -1,6 +1,6 @@
+import { useEffect} from "react";
 import { mapImages } from "../../data/mapImages.js";
 import "../styles/TaiwanMapComponent.css";
-
 
 const MapControls = ({
   imgW, imgH,
@@ -11,11 +11,11 @@ const MapControls = ({
   setLonDirMin, setLonDirMax, setLatDirMin, setLatDirMax,
   activeMapId, setActiveMapId,
   setMapImage,
+  selectedMap, setSelectedMap,
   handleImageUpload,
   handleSwitchMap
 }) => {
   const resetMapSettings = () => {
-    // 重置圖片尺寸和經緯度設置
     setImgW('');
     setImgH('');
     setLonRange([0, 0]);
@@ -26,27 +26,38 @@ const MapControls = ({
     setLatDirMax('S');
   };
 
+  useEffect(() => {
+    if (selectedMap) {    
+      handleSwitchMap(selectedMap); 
+    } else {
+      resetMapSettings();
+    }
+  }, [selectedMap, handleSwitchMap]);
+
   return (
     <div className="map-settings-container">
       {/* 📁 上傳 & 地圖清單 */}
       <div className="map-upload-column">
         <div className="map-select-container">
           <label>Select Map Image: 
-            <select
+           <select
               value={activeMapId ?? ""}
               onChange={(e) => {
                 const value = e.target.value;
                 if (value === "") {
                   setActiveMapId("");
                   setMapImage(null);
-                  resetMapSettings();  // Clear settings
+                  resetMapSettings();  
                 } else if (value === "Customize") {
                   setActiveMapId("Customize");
                   setMapImage(null);
-                  resetMapSettings();  // Clear settings
+                  resetMapSettings();  
                 } else {
                   const map = mapImages.find((m) => m.id === value);
-                  if (map) handleSwitchMap(map);
+                  if (map) {
+                    setSelectedMap(map);  
+                    handleSwitchMap(map);
+                  }
                 }
               }}
             >
@@ -74,7 +85,6 @@ const MapControls = ({
             Choose File
           </label>          
         </div>
-
 
         {/* 提醒框 
         {(activeMapId === "" ) && (

@@ -21,9 +21,10 @@ const TaiwanMapComponent = ({
   onMapSettingsChange,
   selectedGene,
   activeSimilarityGroup,
-   isReduced, 
-   setIsReduced,
-
+  isReduced, 
+  setIsReduced,
+  selectedMap,
+  setSelectedMap,
 }) => {
   const [searchTerm, setSearchTerm] = useState(""); 
   
@@ -160,6 +161,8 @@ const TaiwanMapComponent = ({
         setLatDirMax={setLatDirMax}
         activeMapId={activeMapId}
         setActiveMapId={setActiveMapId}
+        selectedMap={selectedMap} 
+        setSelectedMap={setSelectedMap} 
         setMapImage={setMapImage}
         handleImageUpload={handleImageUpload}
         handleSwitchMap={handleSwitchMap}
@@ -186,8 +189,8 @@ const TaiwanMapComponent = ({
           decimalToDegreeMinuteWithDir={decimalToDegreeMinuteWithDir}
           handleExportPNG={handleExportPNG}
           mapLoaded={mapLoaded}
-           filteredGeneList={filteredGeneList}
-           setFileName={setFileName}
+          filteredGeneList={filteredGeneList}
+          setFileName={setFileName}
         />
       </div>
 

@@ -76,6 +76,8 @@ const GeneSelector = ({
   const resultsTotalPages = Math.ceil(results.length / resultsPerPage);
   const currentResults = filterResults(results, selectedGene).slice(resultsPage * resultsPerPage, (resultsPage + 1) * resultsPerPage);
 
+  
+
   // Reset selection and related states
   const resetSelection = () => {
     setSelectedGene(null);
@@ -94,6 +96,7 @@ const GeneSelector = ({
     }
     resetSelection(); 
     setSelectedGene(selectedGeneName); 
+    filterBySimilarity(100, 100);
   };
 
   const handlePageChange = (dir) => {
@@ -157,6 +160,12 @@ const GeneSelector = ({
   const [isLengthConsistent, setIsLengthConsistent] = useState(true);
 
   useEffect(() => {
+    if (selectedGene) {
+      filterBySimilarity(100, 100); // 根據需要的相似度範圍調用
+    }
+  }, [selectedGene]); 
+
+  useEffect(() => {
     const isAllConfigured =
       Array.isArray(genes) && genes.length > 0 &&
       Array.isArray(eDnaSampleContent) && eDnaSampleContent.length > 0;
@@ -215,7 +224,6 @@ const GeneSelector = ({
               className="gene-selector-header"
               onClick={() => { resetSelection(); showAllGenes(); }}
             >
-              Select ASV
             </div>
 
             <input
@@ -292,6 +300,7 @@ const GeneSelector = ({
                 className="range-input"
               />
               <button
+                className="GeneSelector-Search-button"
                 onClick={() => {
                   if (customMin <= customMax) {
                     filterBySimilarity(customMin, customMax);

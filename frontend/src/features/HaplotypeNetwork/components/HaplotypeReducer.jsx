@@ -64,7 +64,7 @@ const HaplotypeReducer = () => {
       <form onSubmit={handleSubmit}>
         {/* FASTA file */}
         <div className="HaplotypeReducer-input-container">
-          <label>FASTA (.msa.asv.fa): </label>
+          <label>FASTA (msa.fa): </label>
           <input
             id="fastaFile"
             type="file"
@@ -82,7 +82,7 @@ const HaplotypeReducer = () => {
 
         {/* Excel file */}
         <div className="HaplotypeReducer-input-container">
-          <label>Sample station Excel (.xlsx): </label>
+          <label>Geo File (.xlsx): </label>
           <input
             id="excelFile"
             type="file"
