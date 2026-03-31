@@ -35,7 +35,7 @@ function createWindow() {
       preload: path.join(__dirname, "preload.js"),
       webSecurity: !isDev,
     },
-    icon: path.join(__dirname, "../frontend/public/MEVP_logo.png"),
+    icon: path.join(__dirname, "../frontend/public/eDNA.png"),
     show: false,
   });
 
