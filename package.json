@@ -67,7 +67,7 @@
       }
     ],
     "mac": {
-      "icon": "icon/MEVP.png",
+      "icon": "icon/eDNA.png",
       "category": "public.app-category.utilities",
       "target": [
         "dmg"
