@@ -115,7 +115,7 @@ const MapMainView = ({
                 id="map-container"
                 style={{
                   position: "relative",
-                  width: conW + 50,
+                  width: conW ,
                   height: conH,
                   userSelect: "none"
                 }}

@@ -127,10 +127,10 @@ const GeneList = ({
       {/* 如果設定完成，顯示原本的內容 */}
       <div style={{ display: "flex", gap: "10px", marginBottom: "15px" }}>
         <button onClick={() => setShowGenes(true)} className="GeneList-button-Select">
-          Display selected ASV
+          Selected ASV
         </button>
         <button onClick={() => setShowGenes(false)} className="GeneList-button-Select">
-          Display selected Locations
+          Selected Locations
         </button>
       </div>
 
@@ -158,7 +158,7 @@ const GeneList = ({
 
           {/* Genes List */}
           <div style={{ maxHeight: "800px", overflowY: "auto", paddingRight: "5px" }}>
-            {filteredGenes.map((name) => {
+            {currentGenes.map((name) => {
               const isEnabled =
                 name === selectedGene ||
                 (Array.isArray(activeSimilarityGroup) && activeSimilarityGroup.includes(name));

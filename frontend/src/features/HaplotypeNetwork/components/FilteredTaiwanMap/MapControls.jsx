@@ -27,12 +27,30 @@ const MapControls = ({
   };
 
   useEffect(() => {
-    if (selectedMap) {    
-      handleSwitchMap(selectedMap); 
-    } else {
-      resetMapSettings();
+  if (selectedMap) {
+    handleSwitchMap(selectedMap);
+  }
+}, [selectedMap]);
+
+const handleSelectMapChange = (e) => {
+  const value = e.target.value;
+  if (value === "") {
+    setActiveMapId("");
+    setMapImage(null);
+    resetMapSettings();
+    setSelectedMap(null); // 清空 selectedMap
+  } else if (value === "Customize") {
+    setActiveMapId("Customize");
+    setMapImage(null);
+    resetMapSettings();
+    setSelectedMap(null); // 清空 selectedMap
+  } else {
+    const map = mapImages.find((m) => m.id === value);
+    if (map) {
+      setSelectedMap(map); // 只改變 selectedMap
     }
-  }, [selectedMap, handleSwitchMap]);
+  }
+};
 
   return (
     <div className="map-settings-container">
@@ -42,24 +60,7 @@ const MapControls = ({
           <label>Select Map Image: 
            <select
               value={activeMapId ?? ""}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === "") {
-                  setActiveMapId("");
-                  setMapImage(null);
-                  resetMapSettings();  
-                } else if (value === "Customize") {
-                  setActiveMapId("Customize");
-                  setMapImage(null);
-                  resetMapSettings();  
-                } else {
-                  const map = mapImages.find((m) => m.id === value);
-                  if (map) {
-                    setSelectedMap(map);  
-                    handleSwitchMap(map);
-                  }
-                }
-              }}
+               onChange={handleSelectMapChange}
             >
               <option value="">------ Select------</option>
               {mapImages.map((map) => (

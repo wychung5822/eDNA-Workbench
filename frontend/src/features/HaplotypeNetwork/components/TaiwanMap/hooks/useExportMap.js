@@ -6,7 +6,9 @@ export default function useExportMap(filteredCityGeneData, geneColors, selectedG
     if (!mapContainer) return;
 
     const html2canvas = (await import("html2canvas")).default;
-    const mapCanvas = await html2canvas(mapContainer);
+    const mapCanvas = await html2canvas(mapContainer, {
+      width: mapContainer.offsetWidth + 50,  
+    });
     const padding = 10;
     const fontSize = 16;
     const boxSize = 14;
@@ -14,14 +16,15 @@ export default function useExportMap(filteredCityGeneData, geneColors, selectedG
     const font = `${fontSize}px sans-serif`;
     const itemsPerColumn = 30;
 
-    const legendItems = (selectedGenes || []).map((name) => ({ name, color: geneColors[name] || "block" }));
+    const legendItems = (selectedGenes || []).map((name) => ({ name, color: geneColors[name] || "block" }));   
     const numCols = Math.ceil(legendItems.length / itemsPerColumn);
     const numRows = Math.min(legendItems.length, itemsPerColumn);
-    const legendWidth = 180 * numCols;
-    const legendHeight = padding * 2 + numRows * (fontSize + spacing);
+    const additionalMargin = 100;
+    const legendWidth = 180 * numCols + additionalMargin ;
+    const legendHeight = padding * 2 + numRows * (fontSize + spacing) ;
 
     const canvas = document.createElement("canvas");
-    canvas.width = mapCanvas.width + legendWidth;
+    canvas.width = mapCanvas.width + legendWidth + additionalMargin;
     canvas.height = Math.max(mapCanvas.height, legendHeight);
 
     const ctx = canvas.getContext("2d");
@@ -34,7 +37,7 @@ export default function useExportMap(filteredCityGeneData, geneColors, selectedG
     legendItems.forEach((item, i) => {
       const col = Math.floor(i / itemsPerColumn);
       const row = i % itemsPerColumn;
-      const x = mapCanvas.width + col * 180 + padding;
+      const x = mapCanvas.width + additionalMargin + col * 180 + padding;
       const y = padding + row * (fontSize + spacing) + fontSize / 2;
 
       ctx.fillStyle = item.color;

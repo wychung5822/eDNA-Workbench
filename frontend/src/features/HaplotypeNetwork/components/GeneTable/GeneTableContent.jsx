@@ -112,17 +112,13 @@ const renderUploadWarning = () => {
           )}
         </>
       )}
+      */}
       {viewMode === "total" && (
         <>
-          {(!displayedHeaders || !Array.isArray(displayedHeaders) || displayedHeaders.length === 0) && (
-            <li> Upload Cvs File</li>
-          )}
-          {(!locations || !Array.isArray(locations) || locations.length === 0) && (
-            <li> Upload eDNA Sample Station (xlsx)</li>
-          )}
+          {(!displayedHeaders || !Array.isArray(displayedHeaders) || displayedHeaders.length === 0) }
+          {(!locations || !Array.isArray(locations) || locations.length === 0)}
         </>
       )}
-      */}
       
     </>
   );

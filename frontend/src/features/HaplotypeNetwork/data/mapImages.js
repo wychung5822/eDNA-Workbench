@@ -1,6 +1,6 @@
 // src/data/mapImages.js 
-import TW1 from "../../../assets/haplotype/TW.png";
-import TW2 from "../../../assets/haplotype/japan-map.png";
+import TW1 from "../../../assets/haplotype/TW.png"; 
+import TW2 from "../../../assets/haplotype/japan-map.png"; 
 import TW3 from "../../../assets/haplotype/world-map.png";
 
 export const mapImages = [
@@ -8,8 +8,8 @@ export const mapImages = [
     id: "tw1",
     name: "Taiwan-Map",
     src: TW1,
-    defaultLonRange: [120, 122],
-    defaultLatRange: [21.5, 25.5],
+    defaultLonRange: [120.01, 122.03],
+    defaultLatRange: [21.90, 25.29],
     lonDirMin: "E",
     lonDirMax: "E",
     latDirMin: "N",
