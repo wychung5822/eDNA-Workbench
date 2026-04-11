@@ -33,7 +33,12 @@ export const findNodeById = (rootNode, nodeId) => {
  * @param {string|number} nodeId         - node whose incoming edge becomes the new root
  * @returns {Object} - { success, newNewick, message }
  */
-export const rerootTree = (treeInstance, originalNewick, nodeId) => {
+export const rerootTree = (
+  treeInstance,
+  originalNewick,
+  nodeId,
+  topLevelMergedIds = []
+) => {
   if (!nodeId || !treeInstance)
     throw new Error("Missing required information: nodeId or treeInstance");
 
@@ -56,6 +61,7 @@ export const rerootTree = (treeInstance, originalNewick, nodeId) => {
       pathIndices.unshift(idx);
       cur = cur.parent;
     }
+    // pathIndices 記錄了該如何從舊的樹走到要reroot的節點
 
     // ── 2. Parse a fresh copy & follow the same path ──
     const freshTree = new phylotree(originalNewick);
@@ -66,6 +72,18 @@ export const rerootTree = (treeInstance, originalNewick, nodeId) => {
       }
       targetNode = targetNode.children[idx];
     }
+
+    // Copy unique_ids from live tree into fresh tree so that Step 9's idMap
+    // can map old IDs → new IDs after re-serialisation.
+    const copyIds = (liveNode, freshNode) => {
+      freshNode.unique_id = liveNode.unique_id;
+      const liveChildren = liveNode.children || [];
+      const freshChildren = freshNode.children || [];
+      for (let i = 0; i < liveChildren.length; i++) {
+        copyIds(liveChildren[i], freshChildren[i]);
+      }
+    };
+    copyIds(treeInstance.nodes, freshTree.nodes);
 
     // ── 3. Build path from target → root ──
     const path = []; // [target, parent, grandparent, …, root]
@@ -80,6 +98,16 @@ export const rerootTree = (treeInstance, originalNewick, nodeId) => {
 
     // Edge to split
     const edgeBL = parseFloat(targetNode.data.attribute || "0");
+    /* 原本：
+        parent ──── 0.4 ──── target
+    
+    變成：
+            newRoot
+          /        \
+        0.2        0.2
+        /            \
+    parent          target
+    */
     const halfBL = edgeBL / 2;
 
     // ── 4. Remove target from its parent's children ──
@@ -87,8 +115,19 @@ export const rerootTree = (treeInstance, originalNewick, nodeId) => {
     const removeIdx = parent.children.indexOf(targetNode);
     if (removeIdx > -1) parent.children.splice(removeIdx, 1);
     targetNode.parent = null;
+    // 此時 target 是一個孤立的子樹，parent 那邊少了一個 child。
 
     // ── 5. Reverse edges along path[1] → path[n-1] ──
+    // path 是 target → root
+    // path[0] 是 targetNode，path[path.length-1] 是舊 root。兩者不動，反轉中間的 parent-child 關係。
+    /*
+      以 path = [C, B, Root] 為例：
+      迴圈 i=1：child=B, par=Root
+        → Root.children 移除 B
+        → B.children.push(Root)    ← Root 變成 B 的 child
+        → Root.parent = B
+        → Root.data.attribute = originalBLs[1]  ← B 原本的邊長轉移到 Root 身上
+    */
     for (let i = 1; i < path.length - 1; i++) {
       const child = path[i];
       const par = path[i + 1];
@@ -122,6 +161,16 @@ export const rerootTree = (treeInstance, originalNewick, nodeId) => {
     if (oldRoot.children && oldRoot.children.length === 1) {
       const remaining = oldRoot.children[0];
       const oldRootParent = oldRoot.parent;
+      /*
+        Step 5 反轉後的結構（oldRoot 還在）：
+            newRoot
+          /        \
+          C         B
+                  /  \
+                  D   Root  ← 多餘，只有一個 child A
+                      |
+                      A
+      */
       if (oldRootParent) {
         const sumBL =
           parseFloat(oldRoot.data.attribute || "0") +
@@ -136,12 +185,50 @@ export const rerootTree = (treeInstance, originalNewick, nodeId) => {
       }
     }
 
-    // ── 8. Serialise ──
+    // DEBUG: print both trees' id structure before serialising
+    // const printTree = (node, indent = "") => {
+    //   if (!node) return;
+    //   console.log(
+    //     `${indent}id=${node.unique_id ?? "none"} name="${
+    //       node.data?.name ?? ""
+    //     }" bl=${node.data?.attribute ?? ""}`
+    //   );
+    //   (node.children || []).forEach((c) => printTree(c, indent + "  "));
+    // };
+    // console.group("── treeInstance (original, old IDs) ──");
+    // printTree(treeInstance.nodes);
+    // console.groupEnd();
+    // console.group("── newRoot (rerooted, carrying old IDs) ──");
+    // printTree(newRoot);
+    // console.groupEnd();
+
+    // ── 8. Build mergedPathMap: for each top-level merged node, record the
+    // child-index path from newRoot to that node. After useTreeLayout assigns
+    // new ids to the rerooted tree, TreeViewer walks the same path to find the
+    // new unique_id without relying on the broken parsedNew idMap approach.
+    const mergedPathMap = {};
+    for (const oldId of topLevelMergedIds) {
+      const mergedNode = findNodeById(newRoot, oldId);
+      if (!mergedNode) continue;
+      const indices = [];
+      let cur = mergedNode;
+      while (cur.parent) {
+        const idx = cur.parent.children.indexOf(cur);
+        indices.unshift(idx);
+        cur = cur.parent;
+      }
+      mergedPathMap[oldId] = indices;
+    }
+
+    console.log("rerootTree: mergedPathMap", mergedPathMap);
+
+    // ── 9. Serialise ──
     const newNewick = convertToNewick(newRoot, new Set(), new Map());
 
     return {
       success: true,
       newNewick,
+      mergedPathMap,
       message: "reroot successful",
     };
   } catch (error) {

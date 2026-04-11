@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 const LABEL_FONT_SIZE = 14;
 
-const Node = ({ data, x, y, isCollapsed, renamedLabel, onRename, onContextMenu, showInternalLabels, alignRight = false, labelX = 0 }) => {
+const Node = ({ data, x, y, isCollapsed, renamedLabel, onRename, onContextMenu, showInternalLabels, alignRight = false, labelX = 0 , unique_id}) => {
   const isInternal = data.children && data.children.length > 0;
   // Show label only for:
   //   - collapsed nodes (renamed placeholder)
@@ -124,7 +124,38 @@ const Node = ({ data, x, y, isCollapsed, renamedLabel, onRename, onContextMenu, 
             </text>
         )
       )}
-
+      {/* Threshold ID badge */}
+      {unique_id && (
+        isInternal ? (
+          <text
+            x={25}
+            y={3}
+            fill="#e74c3c"
+            textAnchor="end"
+            style={{
+              fontSize: '10px',
+              fontWeight: 'bold',
+              pointerEvents: 'none',
+            }}
+          >
+            {unique_id}
+          </text>
+        ) : (
+          <text
+            x={5}
+            y={3}
+            fill="#e74c3c"
+            textAnchor="end"
+            style={{
+              fontSize: '10px',
+              fontWeight: 'bold',
+              pointerEvents: 'none',
+            }}
+          >
+            {unique_id}
+          </text>
+        )
+      )}
     </g>
   );
 };

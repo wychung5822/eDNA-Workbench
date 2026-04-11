@@ -30,6 +30,15 @@ const treeReducer = (state, action) => {
         newick: action.payload,
         loading: true,
       };
+    case 'LOAD_WITH_STATE':
+      return {
+        ...initialState,
+        newick: action.payload.newick,
+        collapsedNodes: action.payload.collapsedNodes,
+        renamedNodes: action.payload.renamedNodes,
+        merged: action.payload.merged,
+        loading: true,
+      };
     case 'PARSE_SUCCESS':
       return { ...state, treeInstance: action.payload, loading: false, error: null };
     case 'PARSE_ERROR':
@@ -64,6 +73,16 @@ const treeReducer = (state, action) => {
       newCollapsed.delete(action.payload);
       return { ...state, merged: newMerged, collapsedNodes: newCollapsed };
     }
+    case 'UPDATE_MERGED_KEYS':
+      // Update merged/collapsed/renamed keys without re-parsing the Newick.
+      // Used after useTreeLayout.handleMerged has assigned X|Y ids to
+      // nodes that were plain-numeric leaves in the previous render.
+      return {
+        ...state,
+        merged: action.payload.merged,
+        collapsedNodes: action.payload.collapsedNodes,
+        renamedNodes: action.payload.renamedNodes,
+      };
     case 'OPEN_CONTEXT_MENU':
       return { ...state, contextMenu: { ...action.payload, visible: true } };
     case 'CLOSE_CONTEXT_MENU':
@@ -76,20 +95,22 @@ const treeReducer = (state, action) => {
 export const TreeProvider = ({ children }) => {
   const [state, dispatch] = useReducer(treeReducer, initialState);
 
-  // Auto-reparse when Newick changes
+  // Auto-reparse when Newick changes OR when loading is set back to true
+  // (e.g. loadWithState called with the same Newick string after a reroot)
   useEffect(() => {
-    if (!state.newick) return;
+    if (!state.newick || !state.loading) return;
     try {
       const tree = new phylotree(state.newick);
       dispatch({ type: 'PARSE_SUCCESS', payload: tree });
     } catch (e) {
       dispatch({ type: 'PARSE_ERROR', payload: e.message });
     }
-  }, [state.newick]); // This depends on state.newick which is updated by reducer
+  }, [state.newick, state.loading]);
 
   // Wrap actions in useCallback to stable references
   const loadNewick = useCallback((newickStr) => dispatch({ type: 'SET_NEWICK', payload: newickStr }), []);
   const loadNewFile = useCallback((newickStr) => dispatch({ type: 'LOAD_NEW_FILE', payload: newickStr }), []);
+  const loadWithState = useCallback((newick, merged, collapsedNodes, renamedNodes) => dispatch({ type: 'LOAD_WITH_STATE', payload: { newick, merged, collapsedNodes, renamedNodes } }), []);
   const toggleCollapse = useCallback((nodeId) => dispatch({ type: 'TOGGLE_COLLAPSE', payload: nodeId }), []);;
   const renameNode = useCallback((id, name) => dispatch({ type: 'RENAME_NODE', payload: { id, name } }), []);
   
@@ -110,19 +131,22 @@ export const TreeProvider = ({ children }) => {
 
   const setMergedNode = useCallback((id, mergedData) => dispatch({ type: 'MERGE_NODES', payload: { id, merged: mergedData } }), []);
   const unmergeNode = useCallback((id) => dispatch({ type: 'UNMERGE_NODE', payload: id }), []);
+  const updateMergedKeys = useCallback((merged, collapsedNodes, renamedNodes) => dispatch({ type: 'UPDATE_MERGED_KEYS', payload: { merged, collapsedNodes, renamedNodes } }), []);
 
   const contextValue = useMemo(() => ({ 
     state,
     dispatch,
     loadNewick,
     loadNewFile,
+    loadWithState,
+    updateMergedKeys,
     toggleCollapse,
     renameNode,
     openContextMenu,
     closeContextMenu,
     setMergedNode,
     unmergeNode
-  }), [state, loadNewick, loadNewFile, toggleCollapse, renameNode, openContextMenu, closeContextMenu, setMergedNode, unmergeNode]);
+  }), [state, loadNewick, loadNewFile, loadWithState, updateMergedKeys, toggleCollapse, renameNode, openContextMenu, closeContextMenu, setMergedNode, unmergeNode]);
 
   return (
     <TreeContext.Provider value={contextValue}>

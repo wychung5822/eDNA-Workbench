@@ -151,6 +151,7 @@ const Phylotree = ({ onNodeRename }) => {
           labelX={commonLabelX}
           onRename={(newName) => onNodeRename(id, newName)}
           onContextMenu={(e) => openContextMenu(e, id, nodeInfo, collapsedNodes.has(id))}
+          unique_id={id}
         />
       ))}
 
