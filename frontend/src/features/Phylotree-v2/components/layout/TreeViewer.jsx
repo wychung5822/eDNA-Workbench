@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTree } from '../../context/TreeContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 import { convertToNewick, getSubtreeNewick } from '../../utils/newickUtils.js';
@@ -10,13 +10,122 @@ import ContextMenu from '../ui/ContextMenu.jsx';
 const TreeViewer = () => {
   const { state, loadNewick, loadNewFile, loadWithState, updateMergedKeys, toggleCollapse, unmergeNode, closeContextMenu, setMergedNode, renameNode } = useTree();
   const { treeInstance, contextMenu } = state;
-  const { settings } = useUI();
+  const { settings, updateSetting, fitRequest } = useUI();
 
   // Phase 1: set by handleMoveToRoot, consumed after loadNewFile render.
   const pendingRemap = useRef(null);
   // Phase 2: set by phase 1 handler, consumed after loadWithState + handleMerged render.
   // At that point useTreeLayout has assigned the correct X|Y id to the merged node.
   const pendingKeyFix = useRef(null);
+
+  // ── Container size (for Fit) + drag-to-pan ─────────────────────
+  const outerRef  = useRef(null);   // wrapper div → ResizeObserver target
+  const scrollRef = useRef(null);   // scrollable inner div
+  // Ref mirror so Fit effect can read latest size without it being a dependency
+  const containerSizeRef = useRef({ w: 800, h: 600 });
+
+  // Always-current settings snapshot for use inside native event closures
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+
+  // ── Drag-to-pan ────────────────────────────────────────────────
+  const dragRef   = useRef({ active: false, startX: 0, startY: 0, scrollLeft: 0, scrollTop: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Observe outer wrapper to track container dimensions for Fit
+  useEffect(() => {
+    const el = outerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      const next = { w: Math.max(width, 200), h: Math.max(height, 200) };
+      containerSizeRef.current = next;
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Respond to Fit requests from SidebarRight.
+  // Use containerSizeRef (not state) so sidebar collapse doesn't re-trigger this.
+  useEffect(() => {
+    if (!fitRequest) return;
+    const { w, h } = containerSizeRef.current;
+    updateSetting('width',  Math.round(w));
+    updateSetting('height', Math.round(h));
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = 0;
+      scrollRef.current.scrollTop  = 0;
+    }
+  }, [fitRequest, updateSetting]);
+
+  // Mouse-wheel zoom (native listener so we can set passive: false)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onWheel = (e) => {
+      e.preventDefault();
+      // Fixed step per scroll tick — immune to deltaY magnitude differences across devices.
+      // ZOOM_STEP: how much to scale per tick (e.g. 0.05 = 5%, 0.1 = 10%)
+      const ZOOM_STEP = 0.03;
+      const factor = 1 - Math.sign(e.deltaY) * ZOOM_STEP;
+      const { width, height } = settingsRef.current;
+      updateSetting('width',  Math.round(Math.min(Math.max(width  * factor, 200), 8000)));
+      updateSetting('height', Math.round(Math.min(Math.max(height * factor, 200), 8000)));
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [updateSetting]);
+
+  // Returns true if the pointer target is an interactive tree element
+  const isInteractiveTarget = (el) => {
+    let node = el;
+    while (node) {
+      const cls = node.getAttribute?.('class') || '';
+      if (cls.includes('rp-node') || cls.includes('rp-branch') || cls.includes('rp-label')) return true;
+      if (node.tagName === 'svg') break;
+      node = node.parentElement;
+    }
+    return false;
+  };
+
+  const handleSvgPointerDown = (e) => {
+    if (e.button !== 0) return;
+
+    // If a rename input is focused, commit the edit and stop here
+    const activeEl = document.activeElement;
+    if (activeEl?.classList.contains('rp-label-input')) {
+      activeEl.blur(); // triggers onBlur → finishEditing on the input component
+      return;
+    }
+
+    // Blank-area left-click always closes context menu first
+    if (contextMenu.visible) {
+      closeContextMenu();
+      return;
+    }
+    if (isInteractiveTarget(e.target)) return;
+    const scroll = scrollRef.current;
+    if (!scroll) return;
+    dragRef.current = { active: true, startX: e.clientX, startY: e.clientY, scrollLeft: scroll.scrollLeft, scrollTop: scroll.scrollTop };
+    setIsDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  };
+
+  const handleSvgPointerMove = (e) => {
+    if (!dragRef.current.active) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    const scroll = scrollRef.current;
+    if (!scroll) return;
+    scroll.scrollLeft = dragRef.current.scrollLeft - dx;
+    scroll.scrollTop  = dragRef.current.scrollTop  - dy;
+  };
+
+  const handleSvgPointerUp = () => {
+    dragRef.current.active = false;
+    setIsDragging(false);
+  };
 
   // Helper: walk child-index path from tree root, return node or null.
   const walkPath = (root, pathIndices) => {
@@ -124,14 +233,6 @@ const TreeViewer = () => {
     loadWithState(newNewick, newMerged, newCollapsed, newRenamed);
   }, [treeInstance, loadWithState, updateMergedKeys]);
   
-  if (!treeInstance) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-        <p style={{ color: '#888' }}>Please upload a Newick file to start.</p>
-      </div>
-    );
-  }
-
   /* Handlers */
   const handleCollapseSubtree = () => {
     const { nodeId, isNodeCollapsed } = contextMenu;
@@ -200,7 +301,7 @@ const TreeViewer = () => {
   };
 
   const handleNodeRename = (nodeId, newName) => {
-    const { treeInstance, collapsedNodes, merged } = state;
+    const { treeInstance, collapsedNodes } = state;
     
     // Find the node
     const targetNode = findNodeById(treeInstance.nodes, nodeId);
@@ -290,18 +391,35 @@ const TreeViewer = () => {
   };
 
   return (
-    <div className="viewport-container" style={{ padding: '20px', minWidth: '100%', minHeight: '100%', position: 'relative' }}>
-      <ContextMenu 
-        visible={contextMenu.visible}
-        position={contextMenu.position}
-        onClose={closeContextMenu}
-        onCollapseSubtree={handleCollapseSubtree}
-        onMoveToRoot={handleMoveToRoot}
-        isNodeCollapsed={contextMenu.isNodeCollapsed}
-      />
-      <svg width={settings.width} height={settings.height}>
-        <Phylotree onNodeRename={handleNodeRename} />
-      </svg>
+    <div ref={outerRef} className="viewport-wrapper">
+      <div ref={scrollRef} className="viewport-scroll">
+        {!treeInstance ? (
+          <div className="viewport-empty">
+            <p>Please upload a Newick file to start.</p>
+          </div>
+        ) : (
+          <>
+            <ContextMenu
+              visible={contextMenu.visible}
+              position={contextMenu.position}
+              onClose={closeContextMenu}
+              onCollapseSubtree={handleCollapseSubtree}
+              onMoveToRoot={handleMoveToRoot}
+              isNodeCollapsed={contextMenu.isNodeCollapsed}
+            />
+            <svg
+              width={settings.width}
+              height={settings.height}
+              style={{ cursor: isDragging ? 'grabbing' : 'grab', display: 'block', userSelect: 'none' }}
+              onPointerDown={handleSvgPointerDown}
+              onPointerMove={handleSvgPointerMove}
+              onPointerUp={handleSvgPointerUp}
+            >
+              <Phylotree onNodeRename={handleNodeRename} />
+            </svg>
+          </>
+        )}
+      </div>
     </div>
   );
 };

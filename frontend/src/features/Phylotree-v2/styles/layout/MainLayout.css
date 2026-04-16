@@ -3,6 +3,19 @@
     grid-template-columns: 280px 1fr 320px;
     height: 100%;
     overflow: hidden;
+    transition: grid-template-columns 0.2s ease;
+}
+
+.phylotree-viewer[data-left="closed"] {
+    grid-template-columns: 36px 1fr 320px;
+}
+
+.phylotree-viewer[data-right="closed"] {
+    grid-template-columns: 280px 1fr 36px;
+}
+
+.phylotree-viewer[data-left="closed"][data-right="closed"] {
+    grid-template-columns: 36px 1fr 36px;
 }
 
 .sidebar-left {
@@ -13,7 +26,7 @@
 }
 
 .tree-viewer {
-    overflow: auto;
+    overflow: hidden;
     background: var(--bg-surface);
     position: relative;
 }
@@ -51,14 +64,12 @@
 
 /* ── Sidebar panel (shared by SidebarLeft / SidebarRight) ───────── */
 .sidebar-panel {
-    padding: 20px;
 }
 
 .sidebar-panel__title {
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--text);
-    margin-bottom: 15px;
 }
 
 .sidebar-panel__section {
@@ -111,3 +122,162 @@
 .phylotree-viewer ::-webkit-scrollbar-corner {
     background: transparent;
 }
+
+/* ── Sidebar header (toggle + title row) ────────────────────── */
+.sidebar-panel__header__left {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 14px 16px 0 16px;
+    min-height: 48px;
+}
+
+.sidebar-panel__header__right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px 0 16px;
+    min-height: 48px;
+}
+
+.sidebar-panel__content {
+    padding: 0 20px 20px 20px;
+}
+
+.sidebar-panel__section-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--detail);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+}
+
+.sidebar-panel__checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--text);
+    cursor: pointer;
+    user-select: none;
+}
+
+.sidebar-panel__select {
+    width: 100%;
+    margin-top: 5px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--input);
+    color: var(--text);
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.sidebar-panel__btn-primary {
+    width: 100%;
+    padding: 9px 0;
+    background: var(--text);
+    color: var(--bg-surface);
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.sidebar-panel__btn-primary:hover {
+    opacity: 0.85;
+}
+
+/* ── Sidebar toggle button ──────────────────────────────────── */
+.sidebar-panel__toggle {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--detail);
+    cursor: pointer;
+    font-size: 1rem;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: color 0.15s, background-color 0.15s;
+}
+
+.sidebar-panel__toggle:hover {
+    background: var(--bg-surface-raised);
+    color: var(--text);
+}
+
+/* ── Collapsed sidebar panel ────────────────────────────────── */
+.sidebar-panel--collapsed {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+}
+
+.sidebar-panel--collapsed .sidebar-panel__header {
+    justify-content: center;
+    padding: 10px 0;
+    gap: 0;
+}
+
+/* ── Tree viewport ──────────────────────────────────────────── */
+.viewport-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.viewport-scroll {
+    position: absolute;
+    inset: 0;
+    overflow: auto;
+    /* hide scrollbars — drag to pan replaces them */
+    scrollbar-width: none;
+}
+
+.viewport-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.viewport-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--detail);
+    font-size: 0.9rem;
+}
+
+.sidebar-panel__btn-secondary {
+    width: 100%;
+    padding: 7px 0;
+    background: none;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.sidebar-panel__btn-secondary:hover {
+    background: var(--bg-surface-raised);
+}
+
+.sidebar-panel__range {
+    width: 100%;
+    accent-color: var(--text);
+}
+
+/* ── Zoom controls overlay ──────────────────────────────────── */
+/* (removed — zoom via mouse wheel, controls in SidebarRight) */

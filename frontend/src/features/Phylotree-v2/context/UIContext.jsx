@@ -18,9 +18,13 @@ export const UIProvider = ({ children }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
 
-  const updateSetting = (key, value) => {
+  // Counter-based fit trigger: increment to request a fit-to-view
+  const [fitRequest, setFitRequest] = useState(0);
+  const requestFit = useCallback(() => setFitRequest(n => n + 1), []);
+
+  const updateSetting = useCallback((key, value) => {
     setSettings(prev => ({ ...prev, [key]: value }));
-  };
+  }, []);
 
   const resetSettings = useCallback(() => {
     setSettings(defaultSettings);
@@ -33,6 +37,8 @@ export const UIProvider = ({ children }) => {
       settings, 
       updateSetting,
       resetSettings,
+      fitRequest,
+      requestFit,
       searchTerm, 
       setSearchTerm,
       searchResults, 
