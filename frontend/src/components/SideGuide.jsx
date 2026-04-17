@@ -18,7 +18,7 @@ export default function SideGuide({ guideKey, side = 'right', defaultOpen = fals
   
   // Draggable state
   const [localSide, setLocalSide] = useState(side);
-  const [top, setTop] = useState('15%');
+  const [top, setTop] = useState('18%');
   const [isDragging, setIsDragging] = useState(false);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   const [previewSide, setPreviewSide] = useState(null); // 'left' or 'right' when dragging
