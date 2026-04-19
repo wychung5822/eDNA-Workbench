@@ -1,5 +1,8 @@
 
+import { DENSITY_PRESETS, useUI } from '../../context/UIContext.jsx';
+
 const Branch = ({ link, xScale, yScale, onClick, onContextMenu, onMouseMove, onMouseLeave }) => {
+  const { settings } = useUI();
   const { source, target } = link;
 
   // Calculate coordinates
@@ -18,7 +21,7 @@ const Branch = ({ link, xScale, yScale, onClick, onContextMenu, onMouseMove, onM
 
 
   const stroke = '#ccc';
-  const strokeWidth = 2; // Fixed for now, can be dynamic
+  const strokeWidth = DENSITY_PRESETS[settings.density]?.branchWidth ?? 2;
   
   const isLeaf = !target.children || target.children.length === 0;
 

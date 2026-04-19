@@ -1,38 +1,16 @@
 import { useTree } from '../../context/TreeContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 import '../../styles/layout/Sidebar.css';
-import { convertToNewick } from '../../utils/newickUtils.js';
+
+const DENSITY_OPTIONS = [
+  { value: 'compact', label: 'Thin'   },
+  { value: 'normal',  label: 'Medium' },
+  { value: 'large',   label: 'Thick'  },
+];
 
 const SidebarRight = ({ isOpen, onToggle }) => {
   const { settings, updateSetting, requestFit } = useUI();
-  const { state: { treeInstance, collapsedNodes, renamedNodes } } = useTree();
-
-  const handleExportNewick = () => {
-    if (!treeInstance?.nodes) {
-      alert('No tree data to export.');
-      return;
-    }
-
-    try {
-      const newickString = convertToNewick(
-        treeInstance.nodes,
-        collapsedNodes,
-        renamedNodes
-      );
-
-      const blob = new Blob([newickString], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'exported_tree.nwk';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      alert(`Export failed: ${error.message}`);
-    }
-  };
+  const { state: { treeInstance: _t } } = useTree(); // keep context subscription for future use
 
   return (
     <div className={`sidebar-panel${isOpen ? '' : ' sidebar-panel--collapsed'}`}>
@@ -91,6 +69,19 @@ const SidebarRight = ({ isOpen, onToggle }) => {
               />
               Show Internal Labels
             </label>
+
+            <label className="sidebar-panel__label" style={{ marginTop: '12px' }}>Branch Density</label>
+            <div className="sidebar-panel__density-group">
+              {DENSITY_OPTIONS.map(({ value, label }) => (
+                <button
+                  key={value}
+                  className={`sidebar-panel__density-btn${settings.density === value ? ' sidebar-panel__density-btn--active' : ''}`}
+                  onClick={() => updateSetting('density', value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <hr className="sidebar-panel__divider" />
@@ -115,17 +106,8 @@ const SidebarRight = ({ isOpen, onToggle }) => {
               onChange={(e) => updateSetting('height', Number(e.target.value))}
             />
 
-            <button className="sidebar-panel__btn-secondary" style={{ marginTop: '10px' }} onClick={requestFit}>
+            <button className="sidebar-panel__btn" style={{ marginTop: '10px' }} onClick={requestFit}>
               Fit to View
-            </button>
-          </div>
-
-          <hr className="sidebar-panel__divider" />
-
-          {/* Actions */}
-          <div className="sidebar-panel__section">
-            <button className="sidebar-panel__btn-primary" onClick={handleExportNewick}>
-              Export Newick
             </button>
           </div>
 

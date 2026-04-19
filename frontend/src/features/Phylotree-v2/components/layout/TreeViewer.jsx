@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useTree } from '../../context/TreeContext.jsx';
-import { useUI } from '../../context/UIContext.jsx';
+import { DENSITY_PRESETS, useUI } from '../../context/UIContext.jsx';
 import { convertToNewick, getSubtreeNewick } from '../../utils/newickUtils.js';
 import { findNodeById, replaceNodeWithSubtree, rerootTree } from '../../utils/treeOps.js';
 import Phylotree from '../tree/Phylotree.jsx';
@@ -410,7 +410,15 @@ const TreeViewer = () => {
             <svg
               width={settings.width}
               height={settings.height}
-              style={{ cursor: isDragging ? 'grabbing' : 'grab', display: 'block', userSelect: 'none' }}
+              style={{
+                cursor: isDragging ? 'grabbing' : 'grab',
+                display: 'block',
+                userSelect: 'none',
+                '--rp-font-size':        `${DENSITY_PRESETS[settings.density]?.fontSize        ?? 14}px`,
+                '--node-r-internal':     `${DENSITY_PRESETS[settings.density]?.nodeRInternal   ?? 4}px`,
+                '--node-r-leaf':         `${DENSITY_PRESETS[settings.density]?.nodeRLeaf        ?? 3}px`,
+                '--node-r-collapsed':    `${DENSITY_PRESETS[settings.density]?.nodeRCollapsed   ?? 5}px`,
+              }}
               onPointerDown={handleSvgPointerDown}
               onPointerMove={handleSvgPointerMove}
               onPointerUp={handleSvgPointerUp}

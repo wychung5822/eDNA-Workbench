@@ -1,7 +1,7 @@
 import { scaleLinear } from 'd3-scale';
 import { useMemo } from 'react';
 import { useTree } from '../../context/TreeContext';
-import { useUI } from '../../context/UIContext';
+import { DENSITY_PRESETS, useUI } from '../../context/UIContext';
 import { useTooltip } from '../../hooks/useTooltip';
 import { useTreeLayout } from '../../hooks/useTreeLayout';
 import { estimateTextWidth } from '../../utils/textWidth';
@@ -15,13 +15,15 @@ import { collectInternalNodes, getHiddenBranches, shouldHideInternalNode } from 
 // Layout constants — single source of truth used throughout this file
 const TRANSLATE_X   = 20;  // matches <g transform="translate(20, 0)">
 const RIGHT_MARGIN  = 30;  // breathing room from SVG right edge
-const LABEL_FONT_SIZE = 14;
 const LABEL_GAP     = 5;   // px between tracer end and text
 
 const Phylotree = ({ onNodeRename }) => {
   const { state: { treeInstance, collapsedNodes, renamedNodes, merged }, openContextMenu } = useTree();
   const { settings, searchTerm } = useUI();
   const { tooltip, showTooltip, hideTooltip } = useTooltip();
+
+  // Font size driven by density preset
+  const labelFontSize = DENSITY_PRESETS[settings.density]?.fontSize ?? 14;
 
   // 1. 計算佈局 (這會給每個節點加上 x, y 座標)
   const processedTree = useTreeLayout(treeInstance, settings, collapsedNodes, merged);
@@ -46,7 +48,7 @@ const Phylotree = ({ onNodeRename }) => {
     const textWidths = new Map();
     leafLinks.forEach(link => {
       const name = link.target.data?.name ?? '';
-      textWidths.set(link.target.unique_id, estimateTextWidth(name, LABEL_FONT_SIZE));
+      textWidths.set(link.target.unique_id, estimateTextWidth(name, labelFontSize));
     });
 
     // --- maxTextWidth: widest leaf label ---
@@ -112,7 +114,7 @@ const Phylotree = ({ onNodeRename }) => {
     const commonLabelX = alignRight ? (rightEdge - maxTextWidth) : 0;
 
     return { xScale, yScale, nodes: visibleNodes, links: visibleLinks, leafLabelData, commonLabelX };
-  }, [processedTree, settings, collapsedNodes, alignRight]);
+  }, [processedTree, settings, collapsedNodes, alignRight, labelFontSize]);
 
   if (!processedTree) return null;
 
@@ -175,6 +177,7 @@ const Phylotree = ({ onNodeRename }) => {
               renamedLabel={renamedLabel}
               isHighlighted={isHighlighted}
               alignRight={settings.alignTips === 'right'}
+              fontSize={labelFontSize}
               onRename={(newName) => onNodeRename(link.target.unique_id, newName)}
             />
           );

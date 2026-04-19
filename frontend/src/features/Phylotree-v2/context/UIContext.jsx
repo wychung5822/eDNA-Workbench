@@ -2,6 +2,31 @@ import { createContext, useCallback, useContext, useState } from 'react';
 
 const UIContext = createContext();
 
+// ── Density presets ────────────────────────────────────────────────
+export const DENSITY_PRESETS = {
+  compact: {
+    branchWidth:      1,
+    fontSize:         12,
+    nodeRInternal:    3,
+    nodeRLeaf:        2,
+    nodeRCollapsed:   4,
+  },
+  normal: {
+    branchWidth:      2,
+    fontSize:         14,
+    nodeRInternal:    4,
+    nodeRLeaf:        3,
+    nodeRCollapsed:   5,
+  },
+  large: {
+    branchWidth:      3.5,
+    fontSize:         17,
+    nodeRInternal:    5.5,
+    nodeRLeaf:        4,
+    nodeRCollapsed:   7,
+  },
+};
+
 const defaultSettings = {
   width: 800,
   height: 600,
@@ -9,7 +34,8 @@ const defaultSettings = {
   alignTips: 'left',
   sort: null,
   horizontalSpacing: 20,
-  verticalSpacing: 20
+  verticalSpacing: 20,
+  density: 'normal',
 };
 
 export const UIProvider = ({ children }) => {

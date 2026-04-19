@@ -35,7 +35,8 @@
     --primary: #f1faff;
     /* --primary: #d3fbd8; */
     /* --primary: #00c6b8; */
-    --border: #333333;
+    /* --border: #333333; */
+    --border: #9a9a9a;
 
     --text: #ced6dd;
     --detail: #9ca4af;

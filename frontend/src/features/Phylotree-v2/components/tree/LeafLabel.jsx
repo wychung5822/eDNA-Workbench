@@ -20,7 +20,7 @@ const TIP_OFFSET    = 7;  // tracer start offset from branch tip
  *   - All text left edges align at the same x ← consistent across all nodes
  *   - Total boundary = labelX + TEXT_GAP + maxTextWidth
  */
-const LeafLabel = ({ x, y, labelX, name, renamedLabel, isHighlighted, alignRight, onRename }) => {
+const LeafLabel = ({ x, y, labelX, name, renamedLabel, isHighlighted, alignRight, fontSize = 14, onRename }) => {
   const displayName = renamedLabel ?? name ?? '';
 
   const [isEditing, setIsEditing] = useState(false);
@@ -51,7 +51,7 @@ const LeafLabel = ({ x, y, labelX, name, renamedLabel, isHighlighted, alignRight
     if (e.key === 'Escape') setIsEditing(false);
   };
 
-  const textLength = estimateTextWidth(displayName, LABEL_FONT_SIZE);
+  const textLength = estimateTextWidth(displayName, fontSize);
 
   // ── Right mode: labelX IS the common tracer-end (same for all leaves);
   //    text left-aligns at tracerEndX + TEXT_GAP — consistent across all nodes.
@@ -59,8 +59,11 @@ const LeafLabel = ({ x, y, labelX, name, renamedLabel, isHighlighted, alignRight
   const textX      = alignRight ? tracerEndX + TEXT_GAP : x + LEFT_TIP_GAP;
   const hasTracer  = alignRight && tracerEndX > x + TIP_OFFSET;
 
-  const highlightWidth = textLength + 4;
-  const highlightX     = textX - 2;
+  // Highlight rect sized to actual font size
+  const highlightWidth  = textLength + 4;
+  const highlightX      = textX - 2;
+  const highlightHeight = fontSize + 2;
+  const highlightY      = y - fontSize / 2 - 1;
 
   return (
     <g className="align-dash">
@@ -89,9 +92,9 @@ const LeafLabel = ({ x, y, labelX, name, renamedLabel, isHighlighted, alignRight
           {isHighlighted && (
             <rect
               x={highlightX}
-              y={y - 9}
+              y={highlightY}
               width={highlightWidth}
-              height={16}
+              height={highlightHeight}
               className="rp-label-highlight"
             />
           )}

@@ -6,7 +6,7 @@ path.rp-branch {
 
 text.rp-label {
     font-family: Courier;
-    font-size: 14px;
+    font-size: var(--rp-font-size, 14px);
     transition: all 0.2s;
     fill: var(--text);
 }
@@ -29,6 +29,7 @@ path.rp-branch:hover {
     --node-r-collapsed: radius for collapsed (merged) nodes
 */
 :root {
+    --rp-font-size:     14px;
     --node-r-internal:  4px;
     --node-r-leaf:      3px;
     --node-r-collapsed: 5px;

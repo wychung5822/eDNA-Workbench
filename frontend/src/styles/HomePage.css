@@ -85,12 +85,16 @@
 
 /* Image section */
 .card-image-wrapper {
-  height: 200px;
+  position: relative;
+  width: 100%;
+  padding-top: 51.67%; /* 1378/2667 × 100% — matches image aspect ratio */
   overflow: hidden;
   flex-shrink: 0;
 }
 
 .card-image {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   background-size: cover;
@@ -106,10 +110,10 @@
 }
 
 .visualization-entry .card-image {
-  background-image: url('../assets/VIZ_light.png');
+  background-image: url('../assets/viz_light_new.png');
 }
 [data-theme="dark"] .visualization-entry .card-image {
-  background-image: url('../assets/VIZ_dark.png');
+  background-image: url('../assets/viz_dark_new.png');
 }
 
 
