@@ -46,55 +46,84 @@ const SidebarLeft = ({ isOpen, onToggle }) => {
   };
 
   const handleExportPNG = () => {
-    const svgEl = document.querySelector('.viewport-scroll svg');
-    if (!svgEl) { alert('No tree to export.'); return; }
+    const treeSvgEl = document.querySelector('.viewport-scroll svg');
+    if (!treeSvgEl) { alert('No tree to export.'); return; }
 
-    // Clone and inline computed styles so CSS variables resolve correctly
-    const clone = svgEl.cloneNode(true);
-    const origEls  = Array.from(svgEl.querySelectorAll('*'));
-    const cloneEls = Array.from(clone.querySelectorAll('*'));
-    origEls.forEach((el, i) => {
-      const computed = window.getComputedStyle(el);
-      const target   = cloneEls[i];
-      ['fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'font-size', 'font-family'].forEach(prop => {
-        const val = computed.getPropertyValue(prop);
-        if (val) target.setAttribute(prop, val);
+    // Optionally capture the axis panel SVG (only if visible in DOM)
+    const axisSvgEl = document.querySelector('.axis-panel svg');
+
+    // Inline computed styles into a cloned SVG so CSS variables resolve correctly
+    const inlineStyles = (origSvg) => {
+      const clone = origSvg.cloneNode(true);
+      const origEls  = Array.from(origSvg.querySelectorAll('*'));
+      const cloneEls = Array.from(clone.querySelectorAll('*'));
+      origEls.forEach((el, i) => {
+        const computed = window.getComputedStyle(el);
+        const target   = cloneEls[i];
+        ['fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'font-size', 'font-family'].forEach(prop => {
+          const val = computed.getPropertyValue(prop);
+          if (val) target.setAttribute(prop, val);
+        });
       });
+      return clone;
+    };
+
+    const treeW = treeSvgEl.width.baseVal.value;
+    const treeH = treeSvgEl.height.baseVal.value;
+    const axisH = axisSvgEl ? axisSvgEl.height.baseVal.value : 0;
+    const totalW = treeW;
+    const totalH = axisH + treeH;
+
+    const bg = window.getComputedStyle(document.documentElement)
+      .getPropertyValue('--bg-surface').trim() || '#ffffff';
+    const dpr = window.devicePixelRatio || 1;
+
+    const canvas = document.createElement('canvas');
+    canvas.width  = totalW * dpr;
+    canvas.height = totalH * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, totalW, totalH);
+
+    // Helper: serialise a cloned SVG to an Image, resolve promise when loaded
+    const svgToImage = (clonedSvg, w, h) => new Promise((resolve, reject) => {
+      clonedSvg.setAttribute('width',  w);
+      clonedSvg.setAttribute('height', h);
+      // Remove translateX transform that was used for scroll-sync — not needed in export
+      clonedSvg.style.transform = '';
+      const svgStr  = new XMLSerializer().serializeToString(clonedSvg);
+      const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+      const url     = URL.createObjectURL(svgBlob);
+      const img = new Image();
+      img.onload  = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('SVG render failed')); };
+      img.src = url;
     });
 
-    const w = svgEl.width.baseVal.value;
-    const h = svgEl.height.baseVal.value;
-    clone.setAttribute('width',  w);
-    clone.setAttribute('height', h);
+    const tasks = [];
 
-    const svgStr  = new XMLSerializer().serializeToString(clone);
-    const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
-    const url     = URL.createObjectURL(svgBlob);
+    if (axisSvgEl) {
+      const axisClone = inlineStyles(axisSvgEl);
+      tasks.push(svgToImage(axisClone, treeW, axisH).then(img => ({ img, x: 0, y: 0, w: treeW, h: axisH })));
+    }
 
-    const img = new Image();
-    img.onload = () => {
-      const dpr = window.devicePixelRatio || 1;
-      const canvas = document.createElement('canvas');
-      canvas.width  = w * dpr;
-      canvas.height = h * dpr;
-      const ctx = canvas.getContext('2d');
-      ctx.scale(dpr, dpr);
-      const bg = window.getComputedStyle(document.documentElement).getPropertyValue('--bg-surface').trim();
-      ctx.fillStyle = bg || '#ffffff';
-      ctx.fillRect(0, 0, w, h);
-      ctx.drawImage(img, 0, 0, w, h);
-      URL.revokeObjectURL(url);
-      canvas.toBlob((blob) => {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'tree.png';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      });
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); alert('PNG export failed.'); };
-    img.src = url;
+    const treeClone = inlineStyles(treeSvgEl);
+    tasks.push(svgToImage(treeClone, treeW, treeH).then(img => ({ img, x: 0, y: axisH, w: treeW, h: treeH })));
+
+    Promise.all(tasks)
+      .then(frames => {
+        frames.forEach(({ img, x, y, w, h }) => ctx.drawImage(img, x, y, w, h));
+        canvas.toBlob((blob) => {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'tree.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        });
+      })
+      .catch(() => alert('PNG export failed.'));
   };
 
   const copyLabel = copyStatus === 'success' ? 'Copied!' : copyStatus === 'error' ? 'Failed' : 'Copy Newick';

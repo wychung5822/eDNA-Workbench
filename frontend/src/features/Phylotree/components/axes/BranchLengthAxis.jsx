@@ -1,4 +1,3 @@
-import React from "react";
 
 /**
  * BranchLengthAxis component for displaying branch length axis with ticks

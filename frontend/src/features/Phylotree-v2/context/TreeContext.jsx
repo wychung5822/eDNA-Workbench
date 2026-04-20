@@ -83,6 +83,23 @@ const treeReducer = (state, action) => {
         collapsedNodes: action.payload.collapsedNodes,
         renamedNodes: action.payload.renamedNodes,
       };
+    case 'THRESHOLD_COLLAPSE': {
+      const threshold = action.payload;
+      const newSet = new Set(state.collapsedNodes);
+      const traverse = (node, parentCollapsed = false) => {
+        if (!node) return;
+        let collapsed = false;
+        if (!parentCollapsed && node.children?.length > 0) {
+          if (node.data.abstract_x >= threshold) {
+            newSet.add(node.unique_id);
+            collapsed = true;
+          }
+        }
+        node.children?.forEach(c => traverse(c, parentCollapsed || collapsed));
+      };
+      if (state.treeInstance?.nodes) traverse(state.treeInstance.nodes);
+      return { ...state, collapsedNodes: newSet };
+    }
     case 'OPEN_CONTEXT_MENU':
       return { ...state, contextMenu: { ...action.payload, visible: true } };
     case 'CLOSE_CONTEXT_MENU':
@@ -132,6 +149,7 @@ export const TreeProvider = ({ children }) => {
   const setMergedNode = useCallback((id, mergedData) => dispatch({ type: 'MERGE_NODES', payload: { id, merged: mergedData } }), []);
   const unmergeNode = useCallback((id) => dispatch({ type: 'UNMERGE_NODE', payload: id }), []);
   const updateMergedKeys = useCallback((merged, collapsedNodes, renamedNodes) => dispatch({ type: 'UPDATE_MERGED_KEYS', payload: { merged, collapsedNodes, renamedNodes } }), []);
+  const thresholdCollapse = useCallback((threshold) => dispatch({ type: 'THRESHOLD_COLLAPSE', payload: threshold }), []);
 
   const contextValue = useMemo(() => ({ 
     state,
@@ -141,12 +159,13 @@ export const TreeProvider = ({ children }) => {
     loadWithState,
     updateMergedKeys,
     toggleCollapse,
+    thresholdCollapse,
     renameNode,
     openContextMenu,
     closeContextMenu,
     setMergedNode,
     unmergeNode
-  }), [state, loadNewick, loadNewFile, loadWithState, updateMergedKeys, toggleCollapse, renameNode, openContextMenu, closeContextMenu, setMergedNode, unmergeNode]);
+  }), [state, loadNewick, loadNewFile, loadWithState, updateMergedKeys, toggleCollapse, thresholdCollapse, renameNode, openContextMenu, closeContextMenu, setMergedNode, unmergeNode]);
 
   return (
     <TreeContext.Provider value={contextValue}>

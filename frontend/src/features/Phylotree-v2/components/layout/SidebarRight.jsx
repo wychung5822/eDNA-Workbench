@@ -70,6 +70,15 @@ const SidebarRight = ({ isOpen, onToggle }) => {
               Show Internal Labels
             </label>
 
+            <label className="sidebar-panel__checkbox-label" style={{ marginTop: '8px' }}>
+              <input
+                type="checkbox"
+                checked={settings.showBranchLengthAxis}
+                onChange={(e) => updateSetting('showBranchLengthAxis', e.target.checked)}
+              />
+              Show Branch Length Axis
+            </label>
+
             <label className="sidebar-panel__label" style={{ marginTop: '12px' }}>Branch Density</label>
             <div className="sidebar-panel__density-group">
               {DENSITY_OPTIONS.map(({ value, label }) => (

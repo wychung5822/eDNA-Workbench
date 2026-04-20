@@ -1,14 +1,19 @@
 
+import { scaleLinear } from 'd3-scale';
 import { useEffect, useRef, useState } from 'react';
 import { useTree } from '../../context/TreeContext.jsx';
 import { DENSITY_PRESETS, useUI } from '../../context/UIContext.jsx';
 import { convertToNewick, getSubtreeNewick } from '../../utils/newickUtils.js';
 import { findNodeById, replaceNodeWithSubtree, rerootTree } from '../../utils/treeOps.js';
+import BranchLengthAxis from '../tree/BranchLengthAxis.jsx';
 import Phylotree from '../tree/Phylotree.jsx';
 import ContextMenu from '../ui/ContextMenu.jsx';
 
+const AXIS_HEIGHT  = 70;  // px — must match BranchLengthAxis SVG height
+const AXIS_TRANSLATE_X = 20; // matches tree's <g transform="translate(20, 0)">
+
 const TreeViewer = () => {
-  const { state, loadNewick, loadNewFile, loadWithState, updateMergedKeys, toggleCollapse, unmergeNode, closeContextMenu, setMergedNode, renameNode } = useTree();
+  const { state, loadNewick, loadNewFile, loadWithState, updateMergedKeys, toggleCollapse, unmergeNode, closeContextMenu, setMergedNode, renameNode, thresholdCollapse } = useTree();
   const { treeInstance, contextMenu } = state;
   const { settings, updateSetting, fitRequest } = useUI();
 
@@ -23,6 +28,13 @@ const TreeViewer = () => {
   const scrollRef = useRef(null);   // scrollable inner div
   // Ref mirror so Fit effect can read latest size without it being a dependency
   const containerSizeRef = useRef({ w: 800, h: 600 });
+
+  // ── Axis layout (reported by Phylotree via onLayoutReady) ────────
+  const [axisLayout, setAxisLayout] = useState({ maxX: 0, rightmost: 0 });
+  const showAxis = settings.showBranchLengthAxis;
+
+  // ── Axis scroll offset — mirrors tree horizontal scroll ──────────
+  const [treeScrollX, setTreeScrollX] = useState(0);
 
   // Always-current settings snapshot for use inside native event closures
   const settingsRef = useRef(settings);
@@ -51,12 +63,25 @@ const TreeViewer = () => {
     if (!fitRequest) return;
     const { w, h } = containerSizeRef.current;
     updateSetting('width',  Math.round(w));
-    updateSetting('height', Math.round(h));
+    // Subtract axis height from available vertical space when axis is shown
+    updateSetting('height', Math.round(showAxis ? h - AXIS_HEIGHT : h));
     if (scrollRef.current) {
       scrollRef.current.scrollLeft = 0;
       scrollRef.current.scrollTop  = 0;
+      setTreeScrollX(0);
     }
-  }, [fitRequest, updateSetting]);
+  }, [fitRequest, updateSetting, showAxis]);
+
+  // Track tree's horizontal scroll position to shift axis SVG via transform.
+  // overflow:hidden on .axis-panel blocks scrollLeft writes from JS, so we use
+  // translateX on the SVG element instead.
+  useEffect(() => {
+    const scrollEl = scrollRef.current;
+    if (!scrollEl) return;
+    const onScroll = () => setTreeScrollX(scrollEl.scrollLeft);
+    scrollEl.addEventListener('scroll', onScroll, { passive: true });
+    return () => scrollEl.removeEventListener('scroll', onScroll);
+  }, []);
 
   // Mouse-wheel zoom (native listener so we can set passive: false)
   useEffect(() => {
@@ -390,8 +415,42 @@ const TreeViewer = () => {
     }
   };
 
+  // Build axis xScale from reported layout numbers (same domain/range as Phylotree's internal scale)
+  const axisXScale = scaleLinear()
+    .domain([0, axisLayout.maxX])
+    .range([0, axisLayout.rightmost]);
+
   return (
     <div ref={outerRef} className="viewport-wrapper">
+
+      {/* ── Branch-length axis panel (fixed, not draggable) ─────── */}
+      {showAxis && treeInstance && axisLayout.maxX > 0 && (
+        <div
+          className="axis-panel"
+          style={{ height: AXIS_HEIGHT }}
+        >
+          <svg
+            width={settings.width}
+            height={AXIS_HEIGHT}
+            style={{
+              display: 'block',
+              transform: `translateX(-${treeScrollX}px)`,
+              '--rp-font-size': `${DENSITY_PRESETS[settings.density]?.fontSize ?? 14}px`,
+            }}
+          >
+            <g transform={`translate(${AXIS_TRANSLATE_X}, 0)`}>
+              <BranchLengthAxis
+                maxX={axisLayout.maxX}
+                xScale={axisXScale}
+                rightmost={axisLayout.rightmost}
+                onThresholdCollapse={thresholdCollapse}
+              />
+            </g>
+          </svg>
+        </div>
+      )}
+
+      {/* ── Scrollable tree area ─────────────────────────────────── */}
       <div ref={scrollRef} className="viewport-scroll">
         {!treeInstance ? (
           <div className="viewport-empty">
@@ -423,7 +482,10 @@ const TreeViewer = () => {
               onPointerMove={handleSvgPointerMove}
               onPointerUp={handleSvgPointerUp}
             >
-              <Phylotree onNodeRename={handleNodeRename} />
+              <Phylotree
+                onNodeRename={handleNodeRename}
+                onLayoutReady={setAxisLayout}
+              />
             </svg>
           </>
         )}

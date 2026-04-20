@@ -31,6 +31,7 @@ const defaultSettings = {
   width: 800,
   height: 600,
   showInternalLabels: false,
+  showBranchLengthAxis: true,
   alignTips: 'left',
   sort: null,
   horizontalSpacing: 20,

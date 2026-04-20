@@ -1,5 +1,5 @@
 import { scaleLinear } from 'd3-scale';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTree } from '../../context/TreeContext';
 import { DENSITY_PRESETS, useUI } from '../../context/UIContext';
 import { useTooltip } from '../../hooks/useTooltip';
@@ -17,7 +17,7 @@ const TRANSLATE_X   = 20;  // matches <g transform="translate(20, 0)">
 const RIGHT_MARGIN  = 30;  // breathing room from SVG right edge
 const LABEL_GAP     = 5;   // px between tracer end and text
 
-const Phylotree = ({ onNodeRename }) => {
+const Phylotree = ({ onNodeRename, onLayoutReady }) => {
   const { state: { treeInstance, collapsedNodes, renamedNodes, merged }, openContextMenu } = useTree();
   const { settings, searchTerm } = useUI();
   const { tooltip, showTooltip, hideTooltip } = useTooltip();
@@ -31,8 +31,8 @@ const Phylotree = ({ onNodeRename }) => {
   // Align-right positioning — derived from settings, used in useMemo and JSX
   const alignRight = settings.alignTips === 'right';
 
-  const { xScale, yScale, nodes, links, leafLabelData, commonLabelX } = useMemo(() => {
-    if (!processedTree) return { nodes: [], links: [], leafLabelData: new Map(), commonLabelX: 0 };
+  const { xScale, yScale, nodes, links, leafLabelData, commonLabelX, rightmost } = useMemo(() => {
+    if (!processedTree) return { nodes: [], links: [], leafLabelData: new Map(), commonLabelX: 0, rightmost: 0 };
 
     const padding = 20;
 
@@ -113,8 +113,14 @@ const Phylotree = ({ onNodeRename }) => {
     // commonLabelX: single tracer-end shared by ALL labels (leaf + internal) in right-align mode
     const commonLabelX = alignRight ? (rightEdge - maxTextWidth) : 0;
 
-    return { xScale, yScale, nodes: visibleNodes, links: visibleLinks, leafLabelData, commonLabelX };
+    return { xScale, yScale, nodes: visibleNodes, links: visibleLinks, leafLabelData, commonLabelX, rightmost };
   }, [processedTree, settings, collapsedNodes, alignRight, labelFontSize]);
+
+  // Report layout numbers to parent (for axis panel in TreeViewer)
+  const maxX = processedTree?.max_x ?? 0;
+  useEffect(() => {
+    onLayoutReady?.({ maxX, rightmost: rightmost ?? 0 });
+  }, [maxX, rightmost, onLayoutReady]);
 
   if (!processedTree) return null;
 
