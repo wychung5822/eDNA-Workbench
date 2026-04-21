@@ -9,9 +9,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Ensure upload directory exists
-const uploadDir = process.env.NODE_ENV === 'production'
-  ? path.join(os.homedir(), '.dna-barcode-toolkit', 'uploads')
-  : path.join(__dirname, "../../uploads");
+const uploadDir =
+  process.env.NODE_ENV === "production"
+    ? path.join(os.homedir(), ".dna-barcode-toolkit", "uploads")
+    : path.join(__dirname, "../../uploads");
 
 // const uploadDir = path.join(__dirname, "../../uploads");
 // if (!fs.existsSync(uploadDir)) {
@@ -30,9 +31,20 @@ const storage = multer.diskStorage({
 
 // File filter
 const fileFilter = (req, file, cb) => {
-  const allowedExtensions = [".fq", ".fastq", ".fa", ".fasta", ".csv", ".zip", ".7z", ".rar", ".tar", ".gz", ".tar.gz"];
+  const allowedExtensions = [
+    ".fq",
+    ".fastq",
+    ".fa",
+    ".fasta",
+    ".csv",
+    ".zip",
+    ".7z",
+    ".tar",
+    ".gz",
+    ".tar.gz",
+  ];
   const ext = path.extname(file.originalname).toLowerCase();
-  
+
   // also handle double extensions like .tar.gz
   const isTarGz = file.originalname.toLowerCase().endsWith(".tar.gz");
 
