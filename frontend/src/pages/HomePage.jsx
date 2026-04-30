@@ -28,7 +28,7 @@ export default function HomePage() {
           </div>
         </Link>
 
-        <Link to="/phylotree" className="visualization-entry entry-box">
+        <Link to="/sequence-alignment" className="visualization-entry entry-box">
           <div className="card-image-wrapper">
             <div className="card-image"></div>
           </div>
